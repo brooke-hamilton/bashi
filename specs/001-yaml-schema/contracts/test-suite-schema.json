@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bashi.dev/schemas/test-suite.json",
+  "title": "Bashi Test Suite",
+  "description": "YAML schema for Bashi CLI test definitions",
+  "type": "object",
+  "required": ["tests"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable identifier for the test suite",
+      "maxLength": 256
+    },
+    "description": {
+      "type": "string",
+      "description": "Explanation of what this test suite validates"
+    },
+    "variables": {
+      "type": "object",
+      "description": "Key-value pairs for variable substitution using {{varName}} syntax",
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fragments": {
+      "type": "object",
+      "description": "Named reusable test fragments referenced via $ref syntax",
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_-]*$": {
+          "$ref": "#/definitions/testFields"
+        }
+      },
+      "additionalProperties": false
+    },
+    "setup": {
+      "type": "string",
+      "description": "Commands to run once before all tests (suite-level setup)"
+    },
+    "teardown": {
+      "type": "string",
+      "description": "Commands to run once after all tests, even if tests fail (suite-level teardown)"
+    },
+    "setupEach": {
+      "type": "string",
+      "description": "Commands to run before each individual test (per-test setup)"
+    },
+    "teardownEach": {
+      "type": "string",
+      "description": "Commands to run after each individual test (per-test teardown)"
+    },
+    "tests": {
+      "type": "array",
+      "description": "Array of test definitions to execute",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/testDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  
+  "definitions": {
+    "testDefinition": {
+      "type": "object",
+      "required": ["name", "command"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Descriptive name for the test (becomes Bats @test name)",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "command": {
+          "type": "string",
+          "description": "Shell command to execute under test",
+          "minLength": 1
+        },
+        "exitCode": {
+          "type": "integer",
+          "description": "Expected exit status code (default: 0)",
+          "minimum": 0,
+          "maximum": 255,
+          "default": 0
+        },
+        "outputContains": {
+          "type": "array",
+          "description": "Strings that must appear in stdout (all must match - AND logic)",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "outputEquals": {
+          "type": "string",
+          "description": "Exact expected stdout (character-for-character match including whitespace)"
+        },
+        "outputMatches": {
+          "type": "string",
+          "description": "POSIX ERE regex pattern that stdout must match",
+          "minLength": 1
+        },
+        "stderr": {
+          "type": "string",
+          "description": "Expected stderr output (exact match)"
+        },
+        "skip": {
+          "oneOf": [
+            {
+              "type": "boolean",
+              "description": "Skip this test (true to skip)"
+            },
+            {
+              "type": "string",
+              "description": "Skip this test with reason message",
+              "minLength": 1
+            }
+          ]
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Maximum execution time in seconds",
+          "minimum": 1
+        },
+        "$ref": {
+          "type": "string",
+          "description": "Reference to a fragment for field inheritance (e.g., '#/fragments/common')",
+          "pattern": "^#/fragments/[a-zA-Z_][a-zA-Z0-9_-]*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    
+    "testFields": {
+      "type": "object",
+      "description": "Partial test definition for fragments (all fields optional)",
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exitCode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "outputContains": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "outputEquals": {
+          "type": "string"
+        },
+        "outputMatches": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stderr": {
+          "type": "string"
+        },
+        "skip": {
+          "oneOf": [
+            {"type": "boolean"},
+            {"type": "string", "minLength": 1}
+          ]
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
