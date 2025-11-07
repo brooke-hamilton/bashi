@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "specify the yaml schema for bashi tests"
 
+## Clarifications
+
+### Session 2025-11-06
+
+- Q: When multiple output assertion types are specified (`outputContains`, `outputEquals`, `outputMatches`), how should they be evaluated? → A: Multiple types allowed, all must pass (AND logic)
+- Q: How should whitespace be handled when comparing actual output to expected output in assertions? → A: Preserve all whitespace exactly (character-for-character matching)
+- Q: When one test in a suite fails, what should happen to the remaining tests? → A: Continue executing remaining tests, report all failures at end
+- Q: Which regex syntax should `outputMatches` support for pattern matching? → A: POSIX Extended Regular Expressions (ERE)
+- Q: When setup or teardown hooks fail, how should test execution proceed? → A: Setup failure skips remaining tests; teardown always runs regardless
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Basic Test Definition (Priority: P1)
@@ -116,7 +126,8 @@ Test authors want to define common test patterns or partial test definitions onc
 - **FR-007**: Each test MUST support an optional `exitCode` field with default value of 0
 - **FR-008**: Each test MUST support an optional `outputContains` field as an array of expected output strings
 - **FR-009**: Each test MUST support an optional `outputEquals` field for exact output matching
-- **FR-010**: Each test MUST support an optional `outputMatches` field for regex pattern matching
+- **FR-010**: Each test MUST support an optional `outputMatches` field for regex pattern matching using POSIX Extended Regular Expressions (ERE) syntax
+- **FR-010a**: When multiple output assertion types are specified, ALL assertions MUST pass for the test to succeed (AND logic)
 - **FR-011**: Each test MUST support an optional `stderr` field for error output validation
 - **FR-012**: Each test MUST support an optional `skip` field to disable test execution with reason
 - **FR-013**: Each test MUST support an optional `timeout` field to limit execution time in seconds
@@ -127,34 +138,43 @@ Test authors want to define common test patterns or partial test definitions onc
 - **FR-015**: System MUST support optional suite-level `teardown` field containing commands to run after all tests
 - **FR-016**: System MUST support optional suite-level `setupEach` field containing commands to run before each test
 - **FR-017**: System MUST support optional suite-level `teardownEach` field containing commands to run after each test
+- **FR-018a**: When suite-level `setup` fails, system MUST skip all remaining tests and mark them as skipped
+- **FR-018b**: When `setupEach` fails for a test, system MUST skip that specific test and continue with remaining tests
+- **FR-018c**: System MUST always execute `teardown` and `teardownEach` hooks regardless of test or setup failures
+- **FR-018d**: System MUST report setup and teardown failures distinctly from test failures
 
 #### Variables
 
-- **FR-018**: System MUST support optional root `variables` field as key-value pairs
-- **FR-019**: System MUST support variable substitution using `{{variableName}}` syntax in command and output fields
-- **FR-020**: System MUST validate all variable references are defined before test execution
-- **FR-021**: System MUST support environment variable access using `{{env.VAR_NAME}}` syntax
+- **FR-019**: System MUST support optional root `variables` field as key-value pairs
+- **FR-020**: System MUST support variable substitution using `{{variableName}}` syntax in command and output fields
+- **FR-021**: System MUST validate all variable references are defined before test execution
+- **FR-022**: System MUST support environment variable access using `{{env.VAR_NAME}}` syntax
 
 #### Fragments and Reuse
 
-- **FR-022**: System MUST support defining reusable test fragments using `fragments` root field
-- **FR-023**: System MUST support referencing fragments using JSON Reference `$ref` syntax
-- **FR-024**: System MUST merge fragment content with test definitions, allowing test values to override fragment values
-- **FR-025**: System MUST detect and report circular fragment references
+- **FR-023**: System MUST support defining reusable test fragments using `fragments` root field
+- **FR-024**: System MUST support referencing fragments using JSON Reference `$ref` syntax
+- **FR-025**: System MUST merge fragment content with test definitions, allowing test values to override fragment values
+- **FR-026**: System MUST detect and report circular fragment references
 
 #### Validation
 
-- **FR-026**: System MUST validate YAML syntax and report parsing errors with line numbers
-- **FR-027**: System MUST validate required fields are present in each test definition
-- **FR-028**: System MUST validate field types match expected schema (strings, numbers, arrays, objects)
-- **FR-029**: System MUST report all validation errors together rather than failing on first error
-- **FR-030**: System MUST include file path and line number in all validation error messages
+- **FR-027**: System MUST validate YAML syntax and report parsing errors with line numbers
+- **FR-028**: System MUST validate required fields are present in each test definition
+- **FR-029**: System MUST validate field types match expected schema (strings, numbers, arrays, objects)
+- **FR-030**: System MUST report all validation errors together rather than failing on first error
+- **FR-031**: System MUST include file path and line number in all validation error messages
 
 #### File Organization
 
-- **FR-031**: System MUST support `.bashi.yml` and `.bashi.yaml` file extensions
-- **FR-032**: System MUST support standard `.yml` and `.yaml` extensions when explicitly specified
-- **FR-033**: System MUST process files with UTF-8 encoding
+- **FR-032**: System MUST support `.bashi.yml` and `.bashi.yaml` file extensions
+- **FR-033**: System MUST support standard `.yml` and `.yaml` extensions when explicitly specified
+- **FR-034**: System MUST process files with UTF-8 encoding
+
+#### Test Execution
+
+- **FR-035**: When a test fails, system MUST continue executing remaining tests in the suite
+- **FR-036**: System MUST report all test failures together at completion, not stop on first failure
 
 ### Key Entities
 
@@ -193,7 +213,7 @@ Test authors want to define common test patterns or partial test definitions onc
 
 5. **Exit Code Default**: If not specified, tests expect exit code 0 (success), matching standard CLI conventions.
 
-6. **Output Validation**: By default, output assertions are case-sensitive and match against stdout unless stderr is explicitly specified.
+6. **Output Validation**: By default, output assertions are case-sensitive and match against stdout unless stderr is explicitly specified. Whitespace is preserved exactly (character-for-character matching) including leading/trailing spaces, tabs, and newlines. Regex patterns use POSIX Extended Regular Expressions (ERE) syntax for Bash 3.2+ compatibility.
 
 7. **Encoding**: All YAML files are UTF-8 encoded, matching modern file system standards.
 
