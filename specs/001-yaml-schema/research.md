@@ -11,17 +11,20 @@
 **Decision**: Hybrid approach - pure Bash parser for simple cases, optional yq/jq for complex features
 
 **Rationale**:
+
 - Bash 3.2+ lacks native YAML parsing, but simple key-value extraction is feasible with `sed`/`awk`
 - Pure Bash parsing ensures zero dependencies for basic test suites (P1 user story)
 - Optional yq (YAML processor) or jq (after `yq eval -o=json`) for advanced features (variables, fragments)
 - Graceful degradation: warn users if advanced features require yq but it's not installed
 
 **Alternatives Considered**:
+
 1. **Pure Bash only**: Rejected - too complex for nested structures and edge cases (YAML anchors, multi-line strings)
 2. **Mandatory yq dependency**: Rejected - violates "accessibility" goal (users shouldn't need to install tools for basic tests)
 3. **Python/Ruby YAML libs**: Rejected - introduces language dependency outside constitution's Bash 3.2+ requirement
 
 **Implementation Guidance**:
+
 - Detect yq/jq availability at runtime: `command -v yq >/dev/null 2>&1`
 - Basic parsing (P1): Pure Bash regex extraction for `name:`, `command:`, `exitCode:`, `outputContains:`
 - Advanced features (P3-P4): Require yq and provide clear error if missing: "Variable substitution requires yq. Install: brew install yq"
@@ -32,17 +35,20 @@
 **Decision**: Use Bash's `[[ string =~ pattern ]]` built-in for ERE regex validation
 
 **Rationale**:
+
 - Bash 3.2+ supports ERE regex natively via `=~` operator in `[[ ]]` conditionals
 - No external dependencies (grep -E would work but `=~` is cleaner for validation)
 - Validates regex patterns before embedding in generated Bats tests
 - Captures match results in `BASH_REMATCH` array for complex assertions
 
 **Alternatives Considered**:
+
 1. **grep -E for validation**: Rejected - requires spawning subprocess, slower, less idiomatic
 2. **PCRE via external tools**: Rejected - not POSIX, introduces dependency
 3. **BRE (Basic Regex)**: Rejected - too limited (no `+`, `?`, `|` alternation)
 
 **Implementation Guidance**:
+
 ```bash
 # Validate ERE pattern
 validate_ere_pattern() {
@@ -57,6 +63,7 @@ validate_ere_pattern() {
 ```
 
 **Known Limitations**:
+
 - Bash 3.2 ERE doesn't support `\d`, `\w`, `\s` (use `[0-9]`, `[a-zA-Z0-9_]`, `[[:space:]]`)
 - Document these POSIX ERE restrictions in schema reference
 
@@ -65,17 +72,20 @@ validate_ere_pattern() {
 **Decision**: Generate Bats files in `/tmp/bashi-{pid}/` with automatic cleanup via trap
 
 **Rationale**:
+
 - Bats-core requires `.bats` files as input - cannot accept tests via stdin
 - Temporary directory per process ID prevents collision in parallel executions
 - `trap` ensures cleanup even if Bashi exits unexpectedly (Ctrl-C, error)
 - `/tmp/` is cross-platform (macOS, Linux) and automatically cleaned on reboot
 
 **Alternatives Considered**:
+
 1. **Persistent `.bats` files in project**: Rejected - clutters user's workspace, requires .gitignore management
 2. **Named pipes**: Rejected - Bats-core doesn't support reading from FIFOs
 3. **In-memory file descriptors**: Rejected - not portable to Bash 3.2, Bats expects real files
 
 **Implementation Guidance**:
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -97,13 +107,15 @@ bats "$generated_test"  # Execute via Bats-core
 **Decision**: Two-pass preprocessing (variables first, fragments second) with cycle detection
 
 **Rationale**:
+
 - Variables resolved before fragment expansion allows fragments to contain variable references
 - Cycle detection prevents infinite loops from circular variable refs: `{{a}}` → `{{b}}` → `{{a}}`
 - Clear error messages guide users to fix circular dependencies
 - Separate passes simplify logic and error reporting
 
 **Algorithm**:
-```
+
+```text
 Pass 1: Variable Resolution
   For each {{varName}} in YAML:
     1. Look up varName in variables: section
@@ -121,11 +133,13 @@ Pass 2: Fragment Expansion
 ```
 
 **Alternatives Considered**:
+
 1. **Single-pass combined resolution**: Rejected - complex logic, hard to debug, unclear precedence
 2. **Fragments before variables**: Rejected - prevents variables in fragments (less flexible)
 3. **No cycle detection**: Rejected - infinite loops would hang Bashi silently
 
 **Edge Cases Handled**:
+
 - Variable referencing undefined variable: Report specific missing var name with line number
 - Variable referencing itself: Detect immediate cycle, report error
 - Empty variable value: Allow (user may want empty string substitution)
@@ -136,12 +150,14 @@ Pass 2: Fragment Expansion
 **Decision**: Generate sequential Bats assertions, fail-fast within single @test block
 
 **Rationale**:
+
 - Clarification confirmed: ALL assertions must pass (AND logic)
 - Bats-core fails test on first assertion failure within `@test` block
 - Generate separate `[[ ... ]]` conditionals or `grep` checks for each assertion
 - Clear error messages indicate which specific assertion failed
 
 **Implementation Pattern**:
+
 ```bash
 @test "example with multiple assertions" {
     run command_under_test
@@ -162,6 +178,7 @@ Pass 2: Fragment Expansion
 ```
 
 **Alternatives Considered**:
+
 1. **OR logic for assertions**: Rejected - clarification specified AND logic
 2. **Continue on assertion failure**: Rejected - Bats-core design is fail-fast per test
 3. **Custom assertion aggregator**: Rejected - reimplements Bats-core logic (violates constitution)
@@ -171,13 +188,15 @@ Pass 2: Fragment Expansion
 **Decision**: Map to Bats-core `setup()`/`teardown()` functions with explicit failure reporting
 
 **Rationale**:
+
 - Clarification specified: setup failure skips tests, teardown always runs
 - Bats-core native behavior: `setup()` failure skips test, `teardown()` always executes
 - Direct mapping honors dependency-first architecture (no reimplementation)
 - Bats-core reports setup/teardown failures distinctly in TAP output
 
 **Mapping**:
-```
+
+```text
 YAML Field          → Bats Function
 ─────────────────────────────────────
 setup:              → setup() { ... }
@@ -189,6 +208,7 @@ teardownEach:       → teardown() { ... }  (same function, runs after each test
 **Note**: Bats-core doesn't distinguish suite-level vs per-test setup/teardown in function names. The distinction is semantic (how Bashi generates the Bats file structure). If both `setup` and `setupEach` are specified, this requires clarification in future refinement.
 
 **Alternatives Considered**:
+
 1. **Custom hook execution**: Rejected - reimplements Bats-core (violates constitution)
 2. **Ignore teardown on failure**: Rejected - clarification mandates teardown always runs (matches Bats)
 3. **Try-catch for setup**: Rejected - Bash 3.2 lacks try-catch, Bats handles this natively
@@ -198,18 +218,21 @@ teardownEach:       → teardown() { ... }  (same function, runs after each test
 **Decision**: Single-pass validation with collected errors, avoid redundant parsing
 
 **Rationale**:
+
 - Success criteria: <100ms for 100-test suites
 - Single YAML parse pass (via yq or pure Bash), collect all errors before reporting
 - Fail-fast on parse errors (malformed YAML), continue on semantic errors (missing fields)
 - Batch error reporting improves UX (user fixes multiple issues at once)
 
 **Performance Optimizations**:
+
 - Validate required fields during initial parse pass (don't re-parse)
 - Cache variable definitions in associative array... wait, Bash 3.2 lacks associative arrays!
 - Alternative: Use `grep` to extract variable names, store in indexed array with name-value pairs
 - Skip fragment expansion during validation-only mode (add `--validate-only` flag)
 
 **Implementation Note**:
+
 ```bash
 # Bash 3.2 compatible "map" using indexed arrays
 declare -a var_names=(key1 key2)
@@ -228,6 +251,7 @@ lookup_var() {
 ```
 
 **Alternatives Considered**:
+
 1. **Parse each field separately**: Rejected - too slow, would miss 100ms target
 2. **Incremental validation**: Rejected - early exit on first error frustrates users
 3. **External validator (JSON Schema)**: Rejected - adds dependency, doesn't validate Bash-specific rules
@@ -259,14 +283,17 @@ lookup_var() {
 ## Dependencies
 
 ### Required
+
 - Bash 3.2+ (system requirement, always present)
 - Bats-core (external dependency, must be installed by user)
 
 ### Optional
+
 - yq or jq (for advanced features: variables, fragments, complex YAML)
 - shellcheck (for development, validation of generated code)
 
 ### Not Required
+
 - Python/Ruby/Node.js (stay pure Bash)
 - YAML parsing libraries (use yq or pure Bash)
 - JSON schema validators (custom Bash validation)

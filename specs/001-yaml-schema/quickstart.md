@@ -35,7 +35,8 @@ tests:
 ```
 
 **Expected Output**:
-```
+
+```text
 ✓ Echo prints message
 
 1 test, 0 failures
@@ -58,6 +59,7 @@ tests:
 ```
 
 This test passes only if:
+
 1. Exit code is 0 AND
 2. Output matches semver regex AND
 3. Output contains "version"
@@ -127,6 +129,7 @@ tests:
 ```
 
 **Lifecycle Order**:
+
 1. `setup` runs once
 2. For each test:
    - `setupEach` runs
@@ -162,6 +165,7 @@ tests:
 ```
 
 **Merge Behavior**:
+
 - Test inherits fragment fields
 - Test-specific fields override fragment (except arrays)
 - Arrays merge: all items from both fragment and test must match
@@ -310,6 +314,7 @@ outputEquals: >
 - Alternation: `pattern1|pattern2`
 
 **Not Supported** (use POSIX equivalent):
+
 - `\d` → use `[0-9]`
 - `\w` → use `[a-zA-Z0-9_]`
 - `\s` → use `[[:space:]]`
@@ -363,6 +368,7 @@ outputMatches: "[0-9]{4}"
 Remember: Multiple assertions use AND logic. If any assertion fails, the test fails.
 
 Check each assertion independently:
+
 1. Is exit code correct?
 2. Does output match exactly (outputEquals)?
 3. Does output contain all strings (outputContains)?
@@ -382,6 +388,7 @@ Check each assertion independently:
 ## Quick Tips
 
 ✅ **DO**:
+
 - Use descriptive test names: "Check version output format" not "Test 1"
 - Group related tests in one suite
 - Use variables for repeated values
@@ -389,6 +396,7 @@ Check each assertion independently:
 - Test both success and failure cases
 
 ❌ **DON'T**:
+
 - Don't use Bash 4+ features in commands (stick to POSIX)
 - Don't specify both `outputEquals` and `outputMatches` (pick one)
 - Don't create circular variable references

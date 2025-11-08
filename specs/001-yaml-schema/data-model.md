@@ -11,6 +11,7 @@
 The root YAML document representing a collection of related tests.
 
 **Fields**:
+
 - `name` (string, optional): Human-readable identifier for the test suite
 - `description` (string, optional): Explanation of what the suite tests
 - `variables` (object, optional): Key-value pairs for variable substitution
@@ -22,12 +23,14 @@ The root YAML document representing a collection of related tests.
 - `tests` (array, required): List of test definitions
 
 **Validation Rules**:
+
 - At least one test required in `tests` array
 - Variable names must be valid identifiers (alphanumeric + underscore, no spaces)
 - Fragment IDs must be unique within suite
 - `setup`/`teardown` commands must be valid shell commands
 
 **Example**:
+
 ```yaml
 name: "CLI Tool Test Suite"
 description: "Tests for myapp command-line interface"
@@ -47,6 +50,7 @@ tests:
 An individual test case specifying a command to execute and expected outcomes.
 
 **Fields**:
+
 - `name` (string, required): Descriptive name for the test (becomes Bats `@test` name)
 - `command` (string, required): Shell command to execute under test
 - `exitCode` (integer, optional, default: 0): Expected exit status code
@@ -59,6 +63,7 @@ An individual test case specifying a command to execute and expected outcomes.
 - `$ref` (string, optional): Reference to a fragment ID for field inheritance
 
 **Validation Rules**:
+
 - `name` and `command` are mandatory
 - `exitCode` must be integer 0-255
 - Cannot specify both `outputEquals` and `outputMatches` (ambiguous intent)
@@ -69,6 +74,7 @@ An individual test case specifying a command to execute and expected outcomes.
 - `$ref` must reference an existing fragment ID
 
 **Example**:
+
 ```yaml
 - name: "Check version output format"
   command: "myapp --version"
@@ -92,6 +98,7 @@ An individual test case specifying a command to execute and expected outcomes.
 A named value defined at suite level, substituted into test commands and assertions.
 
 **Structure**:
+
 ```yaml
 variables:
   VAR_NAME: "value"
@@ -99,6 +106,7 @@ variables:
 ```
 
 **Resolution Rules**:
+
 - User-defined variables: `{{VAR_NAME}}` replaced with value from `variables:` section
 - Environment variables: `{{env.PATH}}` replaced with value from shell environment
 - Undefined variable reference: Validation error with line number
@@ -106,6 +114,7 @@ variables:
 - Variables resolved before fragment expansion
 
 **Example**:
+
 ```yaml
 variables:
   BASE_URL: "https://api.example.com"
@@ -124,6 +133,7 @@ tests:
 A reusable partial test definition that can be referenced by multiple tests.
 
 **Structure**:
+
 ```yaml
 fragments:
   common-output-checks:
@@ -145,6 +155,7 @@ tests:
 ```
 
 **Merge Rules**:
+
 1. Fragment fields are inherited by referencing test
 2. Test-level fields override fragment fields (except arrays)
 3. Arrays are merged: test's array + fragment's array (all must match)
@@ -153,6 +164,7 @@ tests:
 6. Circular references detected and reported as error
 
 **Example**:
+
 ```yaml
 fragments:
   base-http-test:
@@ -176,18 +188,21 @@ tests:
 Setup or teardown commands that run at specific points in test execution.
 
 **Types**:
+
 1. **Suite-level setup** (`setup:`): Runs once before first test
 2. **Suite-level teardown** (`teardown:`): Runs once after last test, even if tests fail
 3. **Per-test setup** (`setupEach:`): Runs before each test
 4. **Per-test teardown** (`teardownEach:`): Runs after each test, even if test fails
 
 **Failure Behavior**:
+
 - `setup` failure: Skip all tests, mark as skipped, run `teardown` anyway
 - `setupEach` failure: Skip specific test, continue with next test
 - `teardown` failure: Report error but doesn't affect test results
 - `teardownEach` failure: Report error but doesn't affect test result
 
 **Example**:
+
 ```yaml
 setup: |
   export TEST_TMPDIR=$(mktemp -d)
@@ -214,7 +229,7 @@ tests:
 
 ## Relationships
 
-```
+```text
 TestSuite (1)
   ├── contains → Tests (1..n)
   ├── defines → Variables (0..n)
@@ -243,7 +258,7 @@ LifecycleHook (1)
 
 ### Test Execution States
 
-```
+```text
 PENDING (initial state)
   ↓
 VALIDATING (schema validation)
@@ -262,6 +277,7 @@ COMPLETED (with results: pass/fail/skip)
 ```
 
 **Error States**:
+
 - VALIDATION_FAILED: YAML syntax error or missing required fields
 - VARIABLE_UNDEFINED: Referenced variable not found
 - CIRCULAR_REFERENCE: Variable or fragment cycle detected
@@ -344,6 +360,7 @@ tests:
 3. **Resolve Variables**: `{{APP}}` → `"myapp"`, command becomes `"myapp --version"`
 4. **Expand Fragments**: Merge `base` fragment (exitCode: 0) into test
 5. **Generate Bats**:
+
    ```bash
    @test "Version check" {
        run myapp --version
@@ -351,6 +368,7 @@ tests:
        [[ "$output" =~ ^version [0-9]+ ]]
    }
    ```
+
 6. **Execute**: Bats-core runs generated `.bats` file
 7. **Report**: TAP output from Bats-core (pass/fail/skip)
 

@@ -5,31 +5,37 @@ This directory contains example YAML test files demonstrating various features o
 ## Examples
 
 ### 1. `basic-test.bashi.yml`
+
 **Purpose**: Minimal test example  
 **Features**: Simple command, exit code, outputContains  
 **Use case**: Getting started, basic validation
 
 ### 2. `multi-assertion.bashi.yml`
+
 **Purpose**: Multiple output assertions  
 **Features**: AND logic, outputEquals, outputMatches, outputContains  
 **Use case**: Comprehensive output validation
 
 ### 3. `variables.bashi.yml`
+
 **Purpose**: Variable substitution  
 **Features**: User variables `{{VAR}}`, environment variables `{{env.VAR}}`  
 **Use case**: Avoiding duplication, external configuration
 
 ### 4. `setup-teardown.bashi.yml`
+
 **Purpose**: Test lifecycle management  
 **Features**: setup, teardown, setupEach, teardownEach  
 **Use case**: Environment preparation, cleanup, temp files
 
 ### 5. `fragments.bashi.yml`
+
 **Purpose**: Reusable test patterns  
 **Features**: Fragment definitions, `$ref` references, field merging  
 **Use case**: DRY principle, common assertions
 
 ### 6. `complete-suite.bashi.yml`
+
 **Purpose**: Full-featured test suite  
 **Features**: All features combined  
 **Use case**: Real-world CLI testing
