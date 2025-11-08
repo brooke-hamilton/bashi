@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Variable Substitution Example
+# Demonstrates: User-defined variables and environment variables
+
+variables:
+  APP_BIN: "./bin/myapp"
+  TEST_FILE: "/tmp/test-data.txt"
+  API_KEY: "{{env.TEST_API_KEY}}"
+
+tests:
+  - name: "Process file"
+    command: "{{APP_BIN}} process {{TEST_FILE}}"
+    exitCode: 0
+    outputContains:
+      - "Processing complete"
+  
+  - name: "Call API"
+    command: "curl -H 'Authorization: {{API_KEY}}' https://api.example.com"
+    exitCode: 0

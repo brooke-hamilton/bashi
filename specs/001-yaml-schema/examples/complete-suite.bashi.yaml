@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Complete Test Suite Example
+# Demonstrates: Real-world test suite with all features
+
+name: "MyApp CLI Test Suite"
+description: "Integration tests for myapp command-line interface"
+
+variables:
+  APP: "./bin/myapp"
+  VERSION_PATTERN: "[0-9]+\\.[0-9]+\\.[0-9]+"
+
+fragments:
+  successful-command:
+    exitCode: 0
+    timeout: 10
+
+setup: |
+  export TEST_DIR=$(mktemp -d)
+  echo "Test directory: $TEST_DIR"
+
+teardown: |
+  rm -rf "$TEST_DIR"
+
+tests:
+  # Basic functionality
+  - name: "Show help message"
+    command: "{{APP}} --help"
+    $ref: "#/fragments/successful-command"
+    outputContains:
+      - "Usage:"
+      - "Options:"
+      - "--help"
+  
+  - name: "Show version in correct format"
+    command: "{{APP}} --version"
+    exitCode: 0
+    outputMatches: "^myapp version {{VERSION_PATTERN}}$"
+  
+  # Error handling
+  - name: "Reject invalid flag"
+    command: "{{APP}} --invalid-flag"
+    exitCode: 1
+    stderr: "Error: Unknown flag --invalid-flag"
+  
+  - name: "Require argument for --file flag"
+    command: "{{APP}} --file"
+    exitCode: 1
+    outputContains:
+      - "Error"
+      - "--file requires an argument"
+  
+  # File operations
+  - name: "Process input file"
+    command: |
+      echo "test data" > "$TEST_DIR/input.txt"
+      {{APP}} process "$TEST_DIR/input.txt"
+    $ref: "#/fragments/successful-command"
+    outputContains:
+      - "Processing complete"
+      - "1 file processed"
+  
+  # Skipped tests
+  - name: "Benchmark performance"
+    command: "{{APP}} --benchmark"
+    skip: "Benchmarking disabled in CI pipeline"

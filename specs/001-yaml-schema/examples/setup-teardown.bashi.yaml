@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Setup and Teardown Example
+# Demonstrates: Lifecycle hooks for test environment preparation
+
+setup: |
+  export TMPDIR=$(mktemp -d)
+  echo "Test environment: $TMPDIR"
+
+teardown: |
+  rm -rf "$TMPDIR"
+  echo "Cleanup complete"
+
+setupEach: |
+  cd "$TMPDIR"
+  touch test-file.txt
+
+teardownEach: |
+  rm -f test-file.txt
+
+tests:
+  - name: "File exists in temp dir"
+    command: "ls test-file.txt"
+    exitCode: 0
+    
+  - name: "Can write to temp file"
+    command: "echo 'data' > test-file.txt && cat test-file.txt"
+    exitCode: 0
+    outputEquals: "data"

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Reusable Fragments Example
+# Demonstrates: DRY principle with test fragments
+
+fragments:
+  http-success:
+    exitCode: 0
+    timeout: 30
+    outputContains:
+      - "HTTP/1.1"
+      - "200 OK"
+
+tests:
+  - name: "GET homepage"
+    command: "curl https://example.com"
+    $ref: "#/fragments/http-success"
+    
+  - name: "GET API endpoint"
+    command: "curl https://api.example.com/health"
+    $ref: "#/fragments/http-success"
+    outputContains:  # Adds to fragment's checks
+      - '"status":"healthy"'

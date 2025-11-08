@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Basic Test Example
+# Demonstrates: Simple test with exit code and output validation
+
+tests:
+  - name: "Echo prints message"
+    command: "echo 'Hello, Bashi!'"
+    exitCode: 0
+    outputContains:
+      - "Hello"
+      - "Bashi"

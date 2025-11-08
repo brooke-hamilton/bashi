@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# Multiple Assertions Example
+# Demonstrates: AND logic - all assertions must pass
+
+tests:
+  - name: "Version command format"
+    command: "myapp --version"
+    exitCode: 0
+    outputMatches: "^myapp version [0-9]+\\.[0-9]+\\.[0-9]+$"
+    outputContains:
+      - "version"
+  
+  - name: "All assertions must pass (AND logic)"
+    command: "myapp status"
+    exitCode: 0
+    outputEquals: "Status: OK"
+    outputMatches: "^Status:.*$"
+    outputContains:
+      - "Status"
+      - "OK"
