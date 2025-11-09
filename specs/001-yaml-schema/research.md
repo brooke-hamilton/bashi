@@ -315,4 +315,3 @@ lookup_var() {
 ## Phase 0 Complete
 
 All critical technical unknowns resolved. Proceed to Phase 1: Design & Contracts.
-

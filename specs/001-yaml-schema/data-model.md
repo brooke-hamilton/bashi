@@ -377,4 +377,3 @@ tests:
 ## Phase 1 Data Model Complete
 
 All entities, relationships, and validation rules defined. Proceed to contracts and quickstart documentation.
-

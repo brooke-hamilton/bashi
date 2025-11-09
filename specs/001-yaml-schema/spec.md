@@ -15,6 +15,14 @@
 - Q: Which regex syntax should `outputMatches` support for pattern matching? → A: POSIX Extended Regular Expressions (ERE)
 - Q: When setup or teardown hooks fail, how should test execution proceed? → A: Setup failure skips remaining tests; teardown always runs regardless
 
+### Session 2025-11-08
+
+- Q: What should happen when a YAML file is empty or contains only comments? → A: Report warning but allow (may be work-in-progress)
+- Q: What should happen when test names contain special characters (quotes, newlines, control chars) or are duplicated within a suite? → A: Sanitize special chars; error on duplicates
+- Q: When a user attempts to use variables or fragments but yq/jq are not installed, what should the system do? → A: Error with installation instructions
+- Q: How should the `timeout` field be implemented given Bash 3.2+ constraints? → A: Best-effort: use timeout if available, ignore and report warning if not available
+- Q: What should happen when required fields (`name`, `command`) are present but have empty string or null values? → A: Validation error for empty/null required fields
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Basic Test Definition (Priority: P1)
@@ -122,6 +130,8 @@ Test authors want to define common test patterns or partial test definitions onc
 #### Test Definition Fields
 
 - **FR-005**: Each test MUST support a `name` field describing what is being tested
+- **FR-005a**: System MUST sanitize special characters (quotes, newlines, control characters) in test names by replacing them with safe alternatives (underscores or spaces) for Bats-core compatibility
+- **FR-005b**: System MUST report a validation error when duplicate test names are detected within a suite
 - **FR-006**: Each test MUST support a `command` field specifying the CLI command to execute
 - **FR-007**: Each test MUST support an optional `exitCode` field with default value of 0
 - **FR-008**: Each test MUST support an optional `outputContains` field as an array of expected output strings
@@ -131,6 +141,7 @@ Test authors want to define common test patterns or partial test definitions onc
 - **FR-011**: Each test MUST support an optional `stderr` field for error output validation
 - **FR-012**: Each test MUST support an optional `skip` field to disable test execution with reason
 - **FR-013**: Each test MUST support an optional `timeout` field to limit execution time in seconds
+- **FR-013a**: System MUST use the `timeout` command if available on the system; if not available, system MUST report a warning and proceed without timeout enforcement
 
 #### Setup and Teardown
 
@@ -149,6 +160,7 @@ Test authors want to define common test patterns or partial test definitions onc
 - **FR-020**: System MUST support variable substitution using `{{variableName}}` syntax in command and output fields
 - **FR-021**: System MUST validate all variable references are defined before test execution
 - **FR-022**: System MUST support environment variable access using `{{env.VAR_NAME}}` syntax
+- **FR-022a**: When variables are used but required YAML parsing tools (yq or jq) are not installed, system MUST report a clear error message with installation instructions
 
 #### Fragments and Reuse
 
@@ -156,14 +168,17 @@ Test authors want to define common test patterns or partial test definitions onc
 - **FR-024**: System MUST support referencing fragments using JSON Reference `$ref` syntax
 - **FR-025**: System MUST merge fragment content with test definitions, allowing test values to override fragment values
 - **FR-026**: System MUST detect and report circular fragment references
+- **FR-026a**: When fragments are used but required YAML parsing tools (yq or jq) are not installed, system MUST report a clear error message with installation instructions
 
 #### Validation
 
 - **FR-027**: System MUST validate YAML syntax and report parsing errors with line numbers
 - **FR-028**: System MUST validate required fields are present in each test definition
+- **FR-028a**: System MUST report a validation error when required fields (`name`, `command`) are present but contain empty string or null values
 - **FR-029**: System MUST validate field types match expected schema (strings, numbers, arrays, objects)
 - **FR-030**: System MUST report all validation errors together rather than failing on first error
 - **FR-031**: System MUST include file path and line number in all validation error messages
+- **FR-032**: When a YAML file is empty or contains only comments, system MUST report a warning but allow processing (may be work-in-progress file)
 
 #### File Organization
 
