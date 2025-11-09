@@ -155,8 +155,8 @@ A developer needs to verify complex output patterns using exact matches, contain
 ### Measurable Outcomes
 
 - **SC-001**: Users can define and execute a simple test in under 2 minutes from creating the YAML file to seeing results
-- **SC-002**: Schema validation errors are reported within 1 second of running bashi
-- **SC-003**: Test execution time adds no more than 10% overhead compared to running commands directly
+- **SC-002**: Schema validation errors are reported within 1 second maximum of running bashi
+- **SC-003**: Test execution wall time adds no more than 10% overhead compared to running commands directly via Bats
 - **SC-004**: Error messages for common mistakes (missing fields, invalid syntax, undefined references) are clear enough that 90% of users can fix the issue without consulting documentation
 - **SC-005**: All six assertion types (exitCode, outputContains, outputEquals, outputMatches, stderr, and skip) work correctly in basic test scenarios
 - **SC-006**: Variable substitution and fragment inheritance reduce test file size by at least 30% in typical multi-test suites
