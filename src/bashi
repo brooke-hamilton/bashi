@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+# bashi - YAML-driven Bash test framework
+# https://github.com/brooke-hamilton/bashi
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source library modules
+source "$SCRIPT_DIR/lib/utils.sh"
+source "$SCRIPT_DIR/lib/validator.sh"
+source "$SCRIPT_DIR/lib/processor.sh"
+source "$SCRIPT_DIR/lib/generator.sh"
+source "$SCRIPT_DIR/lib/executor.sh"
+
+# Version
+VERSION="0.1.0"
+
+# Default options
+VERBOSE=false
+VALIDATE_ONLY=false
+TIMEOUT=300
+
+# Usage information
+usage() {
+    cat <<EOF
+Usage: bashi [OPTIONS] <test-suite.yaml>
+
+YAML-driven Bash test framework using Bats-core
+
+OPTIONS:
+    -h, --help              Show this help message
+    -v, --version           Show version information
+    --verbose               Enable verbose output
+    --validate-only         Only validate the YAML schema, don't run tests
+    --timeout SECONDS       Set test execution timeout (default: 300)
+
+EXAMPLES:
+    bashi tests/my-suite.bashi.yaml
+    bashi --validate-only tests/my-suite.bashi.yaml
+    bashi --verbose --timeout 60 tests/my-suite.bashi.yaml
+
+EXIT CODES:
+    0   All tests passed
+    1   One or more tests failed
+    2   Invalid usage or missing dependencies
+
+EOF
+}
+
+# Version information
+version_info() {
+    echo "bashi version $VERSION"
+    echo "YAML-driven Bash test framework"
+}
+
+# Parse command line arguments
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -v|--version)
+                version_info
+                exit 0
+                ;;
+            --verbose)
+                VERBOSE=true
+                export BASHI_VERBOSE=true
+                shift
+                ;;
+            --validate-only)
+                VALIDATE_ONLY=true
+                shift
+                ;;
+            --timeout)
+                if [ $# -lt 2 ]; then
+                    log_error "Option --timeout requires an argument"
+                    exit 2
+                fi
+                TIMEOUT="$2"
+                shift 2
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                usage >&2
+                exit 2
+                ;;
+            *)
+                # Positional argument - test suite file
+                if [ -n "${TEST_SUITE_FILE:-}" ]; then
+                    log_error "Multiple test suite files specified"
+                    exit 2
+                fi
+                TEST_SUITE_FILE="$1"
+                shift
+                ;;
+        esac
+    done
+    
+    # Validate required arguments
+    if [ -z "${TEST_SUITE_FILE:-}" ]; then
+        log_error "No test suite file specified"
+        usage >&2
+        exit 2
+    fi
+}
+
+# Main workflow
+main() {
+    parse_args "$@"
+    
+    # Check dependencies
+    check_dependencies || exit 2
+    
+    # Validate YAML file exists
+    check_file_exists "$TEST_SUITE_FILE" || exit 2
+    
+    # Step 1: Validate schema
+    log_verbose "Step 1: Validating YAML schema..."
+    if ! validate_schema "$TEST_SUITE_FILE"; then
+        log_error "Schema validation failed"
+        exit 2
+    fi
+    
+    if [ "$VALIDATE_ONLY" = true ]; then
+        echo "✓ Schema validation passed"
+        exit 0
+    fi
+    
+    # Step 2: Process YAML and resolve variables
+    log_verbose "Step 2: Processing YAML and resolving variables..."
+    local processed_data
+    processed_data=$(process_test_suite "$TEST_SUITE_FILE")
+    
+    # Step 3: Generate Bats test file
+    log_verbose "Step 3: Generating Bats test file..."
+    local suite_name
+    suite_name=$(yq eval '.name' "$TEST_SUITE_FILE")
+    
+    local temp_dir
+    temp_dir=$(mktemp -d -t bashi.XXXXXX)
+    local bats_file="$temp_dir/test.bats"
+    
+    echo "$processed_data" | generate_bats_file "$suite_name" "$bats_file"
+    
+    # Step 4: Execute tests
+    log_verbose "Step 4: Executing tests..."
+    local exit_code=0
+    
+    if ! execute_bats_tests "$bats_file" "$TIMEOUT"; then
+        exit_code=$?
+    fi
+    
+    # Cleanup temp directory
+    rm -rf "$temp_dir"
+    
+    # Return Bats exit code
+    exit $exit_code
+}
+
+# Run main
+main "$@"

@@ -1,0 +1,37 @@
+# Bashi - Bash Test Framework .gitignore
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*~
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build/test artifacts
+dist/
+build/
+*.log
+
+# Test results
+test-results/
+coverage/
+
+# Dependencies (if using any package managers)
+vendor/
+
+# Bashi specific - temp test files generated during execution
+*.bats.tmp

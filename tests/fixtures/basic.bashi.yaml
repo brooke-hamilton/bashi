@@ -1,0 +1,22 @@
+name: Basic Test Suite
+description: Simple test to verify bashi functionality
+
+variables:
+  greeting: Hello
+  target: World
+
+tests:
+  - name: Echo test with variable substitution
+    command: echo "{{greeting}} {{target}}"
+    exitCode: 0
+    outputContains:
+      - "Hello World"
+
+  - name: Exit code test
+    command: /bin/false
+    exitCode: 1
+
+  - name: Stderr test
+    command: echo "Error message" >&2
+    exitCode: 0
+    stderr: "Error message"

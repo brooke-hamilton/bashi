@@ -1,0 +1,16 @@
+# ShellCheck configuration for Bashi
+# Constitution-compliant shellcheck settings
+
+# Disable specific checks where necessary per constitution
+# SC2034: Unused variables (may be used for documentation)
+# SC2155: Declare and assign separately (sometimes needed for pipefail)
+
+# Enable optional checks
+enable=quote-safe-variables
+enable=require-variable-braces
+
+# Set shell dialect
+shell=bash
+
+# Source path for library files
+source-path=SCRIPTDIR
