@@ -13,4 +13,5 @@ enable=require-variable-braces
 shell=bash
 
 # Source path for library files
-source-path=SCRIPTDIR
+source-path=${SCRIPT_DIR}/lib
+external-sources=true

@@ -1,24 +1,24 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # bashi - YAML-driven Bash test framework
 # https://github.com/brooke-hamilton/bashi
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck disable=SC2034
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source library modules
-source "$SCRIPT_DIR/lib/utils.sh"
-source "$SCRIPT_DIR/lib/validator.sh"
-source "$SCRIPT_DIR/lib/processor.sh"
-source "$SCRIPT_DIR/lib/generator.sh"
-source "$SCRIPT_DIR/lib/executor.sh"
+source "${SCRIPT_DIR}/lib/utils.sh"
+source "${SCRIPT_DIR}/lib/validator.sh"
+source "${SCRIPT_DIR}/lib/processor.sh"
+source "${SCRIPT_DIR}/lib/generator.sh"
+source "${SCRIPT_DIR}/lib/executor.sh"
 
 # Version
 VERSION="0.1.0"
 
 # Default options
-VERBOSE=false
 VALIDATE_ONLY=false
 TIMEOUT=300
 TAP_OUTPUT=false
@@ -57,7 +57,7 @@ EOF
 
 # Version information
 version_info() {
-    echo "bashi version $VERSION"
+    echo "bashi version ${VERSION}"
     echo "YAML-driven Bash test framework"
 }
 
@@ -69,12 +69,11 @@ parse_args() {
                 usage
                 exit 0
                 ;;
-            -v|--version)
+            --version)
                 version_info
                 exit 0
                 ;;
-            --verbose)
-                VERBOSE=true
+            -v|--verbose)
                 export BASHI_VERBOSE=true
                 shift
                 ;;
@@ -135,16 +134,16 @@ main() {
     check_dependencies || exit 2
     
     # Validate YAML file exists
-    check_file_exists "$TEST_SUITE_FILE" || exit 2
+    check_file_exists "${TEST_SUITE_FILE}" || exit 2
     
     # Step 1: Validate schema
     log_verbose "Step 1: Validating YAML schema..."
-    if ! validate_schema "$TEST_SUITE_FILE"; then
+    if ! validate_schema "${TEST_SUITE_FILE}"; then
         log_error "Schema validation failed"
         exit 2
     fi
     
-    if [ "$VALIDATE_ONLY" = true ]; then
+    if [ "${VALIDATE_ONLY}" = true ]; then
         echo "✓ Schema validation passed"
         exit 0
     fi
@@ -152,32 +151,32 @@ main() {
     # Step 2: Process YAML and resolve variables
     log_verbose "Step 2: Processing YAML and resolving variables..."
     local processed_data
-    processed_data=$(process_test_suite "$TEST_SUITE_FILE")
+    processed_data=$(process_test_suite "${TEST_SUITE_FILE}")
     
     # Step 3: Generate Bats test file
     log_verbose "Step 3: Generating Bats test file..."
     local suite_name
-    suite_name=$(yq eval '.name' "$TEST_SUITE_FILE")
+    suite_name=$(yq eval '.name' "${TEST_SUITE_FILE}")
     
     local temp_dir
     temp_dir=$(mktemp -d -t bashi.XXXXXX)
-    local bats_file="$temp_dir/test.bats"
+    local bats_file="${temp_dir}/test.bats"
     
-    echo "$processed_data" | generate_bats_file "$suite_name" "$bats_file" "$TRACE"
+    echo "${processed_data}" | generate_bats_file "${suite_name}" "${bats_file}" "${TRACE}"
     
     # Step 4: Execute tests
     log_verbose "Step 4: Executing tests..."
     local exit_code=0
     
-    if ! execute_bats_tests "$bats_file" "$TIMEOUT" "$TAP_OUTPUT" "$TIMING" "$TRACE"; then
+    if ! execute_bats_tests "${bats_file}" "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}"; then
         exit_code=$?
     fi
     
     # Cleanup temp directory
-    rm -rf "$temp_dir"
+    rm -rf "${temp_dir}"
     
     # Return Bats exit code
-    exit $exit_code
+    exit "${exit_code}"
 }
 
 # Run main
