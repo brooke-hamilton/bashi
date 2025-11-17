@@ -7,27 +7,40 @@ set -euo pipefail
 # Assumes utils.sh has already been sourced
 
 # execute_bats_tests: Run Bats test file
-# Args: $1 = bats file path, $2 = timeout (optional, default 300)
+# Args: $1 = bats file path, $2 = timeout (optional, default 300), $3 = tap output (optional, default false), $4 = timing (optional, default false), $5 = trace (optional, default false)
 # Returns: Bats exit code
 execute_bats_tests() {
     local bats_file="$1"
     local timeout="${2:-300}"
+    local tap_output="${3:-false}"
+    local timing="${4:-false}"
+    local trace="${5:-false}"
     
     check_file_exists "$bats_file" || return 1
     
     log_verbose "Executing Bats tests: $bats_file (timeout: ${timeout}s)"
     
+    # Build bats command with optional --tap and --timing flags
+    # Note: trace is handled in test generation, not passed to bats
+    local bats_cmd="bats"
+    if [ "$tap_output" = true ]; then
+        bats_cmd="bats --tap"
+    fi
+    if [ "$timing" = true ]; then
+        bats_cmd="$bats_cmd --timing"
+    fi
+    
     # Check if timeout command is available
     if command -v timeout >/dev/null 2>&1; then
         # GNU timeout
-        timeout "${timeout}s" bats "$bats_file"
+        timeout "${timeout}s" $bats_cmd "$bats_file"
     elif command -v gtimeout >/dev/null 2>&1; then
         # GNU timeout on macOS (installed via coreutils)
-        gtimeout "${timeout}s" bats "$bats_file"
+        gtimeout "${timeout}s" $bats_cmd "$bats_file"
     else
         # No timeout available - run without timeout
         log_verbose "Warning: timeout command not available, running without timeout"
-        bats "$bats_file"
+        $bats_cmd "$bats_file"
     fi
     
     return $?
@@ -78,5 +91,7 @@ report_results() {
         echo ""
         echo "Test Summary:"
         parse_tap_output < "$tap_file"
+        echo "Outputting tap file:"
+        cat "$tap_file"
     fi
 }

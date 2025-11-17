@@ -20,3 +20,4 @@ tests:
     command: echo "Error message" >&2
     exitCode: 0
     stderr: "Error message"
+  

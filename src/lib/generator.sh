@@ -38,15 +38,43 @@ generate_bats_test() {
     local test_name="$1"
     local test_command="$2"
     local expected_exit="${3:-0}"
-    shift 3
+    local trace_mode="${4:-false}"
+    shift 4
     
     # Start test
     cat <<EOF
 @test "$test_name" {
+EOF
+
+    # Add trace output if enabled
+    if [ "$trace_mode" = true ]; then
+        cat <<'EOF'
+    # Trace output
+    echo "" >&3
+    echo "# Running test: $BATS_TEST_DESCRIPTION" >&3
+EOF
+        echo "    echo '# Command: $test_command' >&3"
+    fi
+    
+    cat <<EOF
     # Execute command and capture output
     run bash -c '$test_command'
     
 EOF
+
+    # Add trace output for results if enabled
+    if [ "$trace_mode" = true ]; then
+        cat <<'EOF'
+    # Trace results
+    echo "# Exit code: $status" >&3
+    if [ -n "$output" ]; then
+        echo "# Output:" >&3
+        echo "$output" | sed 's/^/# /' >&3
+    fi
+    echo "" >&3
+    
+EOF
+    fi
     
     # Exit code assertion (always check)
     echo "    # Verify exit code"
@@ -64,10 +92,11 @@ EOF
 }
 
 # generate_bats_file: Generate complete Bats file from processed test data
-# Args: $1 = suite name, $2 = output file path, stdin = processed test data
+# Args: $1 = suite name, $2 = output file path, $3 = trace mode (optional, default false), stdin = processed test data
 generate_bats_file() {
     local suite_name="$1"
     local output_file="$2"
+    local trace_mode="${3:-false}"
     
     log_verbose "Generating Bats file: $output_file"
     
@@ -84,7 +113,7 @@ generate_bats_file() {
             if [[ "$line" =~ ^TEST:([0-9]+):name=(.+)$ ]]; then
                 # New test starting - output previous test if exists
                 if [ -n "$current_test_name" ]; then
-                    generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "${current_assertions[@]}"
+                    generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "${current_assertions[@]}"
                 fi
                 
                 # Reset for new test
@@ -127,7 +156,7 @@ generate_bats_file() {
         
         # Output final test
         if [ -n "$current_test_name" ]; then
-            generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "${current_assertions[@]}"
+            generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "${current_assertions[@]}"
         fi
     } > "$output_file"
     

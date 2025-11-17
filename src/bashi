@@ -21,6 +21,9 @@ VERSION="0.1.0"
 VERBOSE=false
 VALIDATE_ONLY=false
 TIMEOUT=300
+TAP_OUTPUT=false
+TIMING=false
+TRACE=false
 
 # Usage information
 usage() {
@@ -34,6 +37,9 @@ OPTIONS:
     -v, --version           Show version information
     --verbose               Enable verbose output
     --validate-only         Only validate the YAML schema, don't run tests
+    -t, --tap               Output in TAP format instead of pretty print
+    -T, --timing            Show timing information for each test
+    -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
 
 EXAMPLES:
@@ -74,6 +80,18 @@ parse_args() {
                 ;;
             --validate-only)
                 VALIDATE_ONLY=true
+                shift
+                ;;
+            -t|--tap)
+                TAP_OUTPUT=true
+                shift
+                ;;
+            -T|--timing)
+                TIMING=true
+                shift
+                ;;
+            -x|--trace)
+                TRACE=true
                 shift
                 ;;
             --timeout)
@@ -145,13 +163,13 @@ main() {
     temp_dir=$(mktemp -d -t bashi.XXXXXX)
     local bats_file="$temp_dir/test.bats"
     
-    echo "$processed_data" | generate_bats_file "$suite_name" "$bats_file"
+    echo "$processed_data" | generate_bats_file "$suite_name" "$bats_file" "$TRACE"
     
     # Step 4: Execute tests
     log_verbose "Step 4: Executing tests..."
     local exit_code=0
     
-    if ! execute_bats_tests "$bats_file" "$TIMEOUT"; then
+    if ! execute_bats_tests "$bats_file" "$TIMEOUT" "$TAP_OUTPUT" "$TIMING" "$TRACE"; then
         exit_code=$?
     fi
     
