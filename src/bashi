@@ -28,7 +28,7 @@ TRACE=false
 # Usage information
 usage() {
     cat <<EOF
-Usage: bashi [OPTIONS] <test-suite.yaml>
+Usage: bashi [OPTIONS] <test-suite.bashi.yaml>
 
 YAML-driven Bash test framework using Bats-core
 

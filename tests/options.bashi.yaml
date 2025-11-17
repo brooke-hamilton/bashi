@@ -1,0 +1,22 @@
+name: Options Test Suite
+description: Test suite to verify command-line options handling. Uses bashi to test bashi.
+
+variables:
+  bashi: $(pwd)/src/bashi
+
+tests:
+  - name: Version test
+    command: "{{bashi}} --version"
+    exitCode: 0
+    outputContains:
+       - "bashi version"
+
+  - name: Help test
+    command: "{{bashi}} --help"
+    exitCode: 0
+    outputContains:
+       - "Usage:"
+
+  # - name: basic
+  #   command: "{{bashi}} ./tests/basic.bashi.yaml --trace"
+  #   exitCode: 0
