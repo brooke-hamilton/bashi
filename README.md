@@ -100,15 +100,20 @@ bashi [OPTIONS] <test-suite.yaml>
 
 OPTIONS:
     -h, --help              Show help message
-    -v, --version           Show version information
-    --verbose               Enable verbose output
+    --version               Show version information
+    -v, --verbose           Enable verbose output
     --validate-only         Only validate the YAML schema
+    -t, --tap               Output in TAP format instead of pretty print
+    -T, --timing            Show timing information for each test
+    -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
 
 EXAMPLES:
     bashi tests/my-suite.bashi.yaml
     bashi --validate-only tests/my-suite.bashi.yaml
     bashi --verbose --timeout 60 tests/my-suite.bashi.yaml
+    bashi --tap --timing tests/my-suite.bashi.yaml
+    bashi --trace --verbose tests/my-suite.bashi.yaml
 ```
 
 ## Test Suite Schema
