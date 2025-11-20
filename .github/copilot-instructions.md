@@ -15,18 +15,3 @@ src/
 tests/
 ```
 
-## Commands
-
-# Add commands for Bash 3.2+ (macOS and Linux compatibility requirement)
-
-## Code Style
-
-Bash 3.2+ (macOS and Linux compatibility requirement): Follow standard conventions
-
-## Recent Changes
-- 002-bashi-implementation: Added Bash 3.2+ (macOS and Linux compatibility requirement) + `yq` (YAML processor), Bats-core (test execution engine)
-
-- 001-yaml-schema: Added Bash 3.2+ (macOS and Linux compatibility requirement) + Bats-core (external test execution engine), optional: yq or jq for YAML parsing
-
-<!-- MANUAL ADDITIONS START -->
-<!-- MANUAL ADDITIONS END -->
