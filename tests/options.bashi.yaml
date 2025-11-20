@@ -17,6 +17,15 @@ tests:
     outputContains:
        - "Usage:"
 
-  # - name: basic
-  #   command: "{{bashi}} ./tests/basic.bashi.yaml --trace"
+  - name: Run basic test suite
+    command: "{{bashi}} ./tests/basic.bashi.yaml"
+    exitCode: 0
+    outputContains:
+       - "Echo test with variable substitution"
+       - "Exit code test"
+       - "Stderr test"
+  
+  # - name: Timings Option
+  #   command: "{{bashi}} ./tests/basic.bashi.yaml --timing"
   #   exitCode: 0
+  #   outputMatches: "\\[[0-9]+\\]"
