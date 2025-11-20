@@ -19,6 +19,7 @@ Instructions for writing clean, safe, and maintainable shell scripts for bash, s
 - Prefer safe expansions: double-quote variable references (`"$var"`), use `${var}` for clarity, and avoid `eval`
 - Use modern Bash features (`[[ ]]`, `local`, arrays) when portability requirements allow; fall back to POSIX constructs only when needed
 - Choose reliable parsers for structured data instead of ad-hoc text processing
+- When bashi command-line options change, ensure README.md is updated accordingly.
 
 ## Error Handling & Safety
 

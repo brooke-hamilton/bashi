@@ -142,8 +142,12 @@ generate_bats_file() {
                 
             elif [[ "$line" =~ ^TEST:[0-9]+:outputMatches=(.+)$ ]]; then
                 local matches="${BASH_REMATCH[1]}"
+                # Strip surrounding quotes if present
+                matches="${matches#\"}"
+                matches="${matches%\"}"
                 current_assertions+=("# Verify stdout matches regex")
-                current_assertions+=("[[ \"\$output\" =~ $matches ]]")
+                current_assertions+=("local regex='$matches'")
+                current_assertions+=("[[ \"\$output\" =~ \$regex ]]")
                 current_assertions+=("")
                 
             elif [[ "$line" =~ ^TEST:[0-9]+:stderr=(.+)$ ]]; then

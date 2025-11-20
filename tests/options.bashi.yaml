@@ -1,5 +1,10 @@
 name: Options Test Suite
 description: Test suite to verify command-line options handling. Uses bashi to test bashi.
+# NOTE: These tests are using bashi to test bashi, which has a side-effect of capturing
+# the output from bats rather than outputting to the terminal directly. Bats automatically
+# switches to the tap formatter when its output is not a terminal, which affects the test by
+# preventing the output from being tested as non-tap formatted. Therefore, all these tests 
+# assume --tap output formatting.
 
 variables:
   bashi: $(pwd)/src/bashi
@@ -25,7 +30,7 @@ tests:
        - "Exit code test"
        - "Stderr test"
   
-  # - name: Timings Option
-  #   command: "{{bashi}} ./tests/basic.bashi.yaml --timing"
-  #   exitCode: 0
-  #   outputMatches: "\\[[0-9]+\\]"
+  - name: Timings Option
+    command: "{{bashi}} ./tests/basic.bashi.yaml --timing --no-color"
+    exitCode: 0
+    outputMatches: "in [0-9]+ms"

@@ -22,6 +22,7 @@ This file defines code review expectations for all code in the bashi repository.
 - Verify error handling is present for critical operations
 - Check that changes align with the project's modular architecture (processor, generator, validator, executor, utils)
 - Ensure new features have corresponding tests in `tests/` directory
+- Make sure the README.md file is up-to-date with the code, especially when command-line options change.
 
 ## Naming Conventions
 

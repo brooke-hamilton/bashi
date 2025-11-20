@@ -107,6 +107,7 @@ OPTIONS:
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
+    --no-color              Disable colored output (useful for testing)
 
 EXAMPLES:
     bashi tests/my-suite.bashi.yaml
@@ -114,6 +115,7 @@ EXAMPLES:
     bashi --verbose --timeout 60 tests/my-suite.bashi.yaml
     bashi --tap --timing tests/my-suite.bashi.yaml
     bashi --trace --verbose tests/my-suite.bashi.yaml
+    bashi --timing --no-color tests/my-suite.bashi.yaml
 ```
 
 ## Test Suite Schema

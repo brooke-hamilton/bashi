@@ -24,6 +24,7 @@ TIMEOUT=300
 TAP_OUTPUT=false
 TIMING=false
 TRACE=false
+NO_COLOR=false
 
 # Usage information
 usage() {
@@ -41,6 +42,7 @@ OPTIONS:
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
+    --no-color              Disable colored output (useful for testing)
 
 EXAMPLES:
     bashi tests/my-suite.bashi.yaml
@@ -93,6 +95,10 @@ parse_args() {
                 TRACE=true
                 shift
                 ;;
+            --no-color)
+                NO_COLOR=true
+                shift
+                ;;
             --timeout)
                 if [ $# -lt 2 ]; then
                     log_error "Option --timeout requires an argument"
@@ -129,6 +135,11 @@ parse_args() {
 # Main workflow
 main() {
     parse_args "$@"
+    
+    # Set NO_COLOR environment variable if requested
+    if [ "${NO_COLOR}" = true ]; then
+        export NO_COLOR=1
+    fi
     
     # Check dependencies
     check_dependencies || exit 2
