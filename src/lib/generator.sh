@@ -78,7 +78,10 @@ EOF
     
     # Exit code assertion (always check)
     echo "    # Verify exit code"
-    echo "    [ \$status -eq $expected_exit ]"
+    echo "    if [ \$status -ne $expected_exit ]; then"
+    echo "        echo \"exit code: expected: $expected_exit, actual: \$status\" >&2"
+    echo "        return 1"
+    echo "    fi"
     echo ""
     
     # Generate additional assertions from remaining args

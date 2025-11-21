@@ -21,6 +21,14 @@ tests:
     exitCode: 0
     outputContains:
        - "Usage:"
+       - "OPTIONS"
+
+  - name: Help without specifying help options
+    command: "{{bashi}}"
+    exitCode: 2
+    outputContains:
+       - "Usage:"
+       - "OPTIONS"
 
   - name: Run basic test suite
     command: "{{bashi}} ./tests/basic.bashi.yaml"
@@ -34,3 +42,5 @@ tests:
     command: "{{bashi}} ./tests/basic.bashi.yaml --timing --no-color"
     exitCode: 0
     outputMatches: "in [0-9]+ms"
+
+  
