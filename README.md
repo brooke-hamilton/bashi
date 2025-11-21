@@ -192,15 +192,48 @@ See `tests/fixtures/` directory for more examples:
 
 ### Running Tests
 
-Bashi tests itself! Run the test suite:
+Bashi tests itself! The repository includes a Makefile for convenient test execution.
+
+**Show available commands:**
 
 ```bash
-bashi tests/fixtures/basic.bashi.yaml
+make help
 ```
 
-## License
+**Run all tests:**
 
-MIT License - see LICENSE file for details
+```bash
+make test
+```
+
+**Run all tests with options:**
+
+```bash
+make test OPTS='--tap --trace'
+```
+
+**Run a specific test file:**
+
+```bash
+make test FILE=./tests/basic.bashi.yaml
+```
+
+**Run a specific test with options:**
+
+```bash
+make test FILE=./tests/basic.bashi.yaml OPTS='--verbose --timing'
+```
+
+**Makefile Variables:**
+
+- `OPTS` - Additional command-line options to pass to bashi (e.g., `--tap`, `--trace`, `--verbose`)
+- `FILE` - Path to a specific test file (if not set, runs all `*.bashi.yaml` files in `./tests/`)
+
+You can also run bashi directly:
+
+```bash
+bashi tests/basic.bashi.yaml
+```
 
 ## Contributing
 

@@ -1,0 +1,33 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # yq is a dependency for bashi but is already installed on ubuntu-latest runners
+      
+      - name: Install Bats
+        run: make install-bats
+      
+      - name: Add bats to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Make bashi executable
+        run: chmod +x ./src/bashi
+      
+      - name: Run tests
+        run: make test OPTS='--tap --trace --timing'
