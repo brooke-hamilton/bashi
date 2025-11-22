@@ -23,25 +23,36 @@ Follow these steps in order:
    - Commit all changes
    - Push all commits to the remote branch
 
-### Step 3: Analyze Changes and Generate PR Content
+### Step 3: Check for Pull Request Template
+1. Check if a PR template exists in the repository at common locations:
+   - `.github/PULL_REQUEST_TEMPLATE.md`
+   - `.github/pull_request_template.md`
+   - `docs/PULL_REQUEST_TEMPLATE.md`
+   - `PULL_REQUEST_TEMPLATE.md`
+2. If a template exists, read its contents to use as the format for the PR description
+3. If no template exists, proceed with a standard format
+
+### Step 4: Analyze Changes and Generate PR Content
 1. Get the repository's default branch (typically `main` or `master`)
 2. Compare the current branch with the default branch using `git diff`
 3. Examine the commit messages between the branches
 4. Based on the changes, generate:
    - **PR Title**: A concise, descriptive title (max 72 characters) that summarizes the changes. Do not use conventional commit prefixes like "feat:", "fix:", etc.
-   - **PR Description**: A detailed description including:
-     - Summary of changes
-     - List of modified files with brief descriptions
-     - Any relevant context from commit messages
-     - Follow conventional commit format if applicable
+   - **PR Description**: 
+     - If a PR template was found, follow its structure and fill in the appropriate sections
+     - If the template contains checkboxes, mark them appropriately based on the changes made
+     - If no template exists, create a detailed description including:
+       - Summary of changes
+       - List of modified files with brief descriptions
+       - Any relevant context from commit messages
 
-### Step 4: Create the Pull Request
+### Step 5: Create the Pull Request
 1. Use the GitHub MCP tool `mcp_github_create_pull_request` to create the PR
 2. Use the current branch as the `head` branch
 3. Use the default branch as the `base` branch
 4. Include the generated title and description
 
-### Step 5: Return PR URL
+### Step 6: Return PR URL
 1. Extract the PR URL from the creation response
 2. Display the URL to the user with a success message
 
