@@ -28,7 +28,7 @@ Follow these steps in order:
 2. Compare the current branch with the default branch using `git diff`
 3. Examine the commit messages between the branches
 4. Based on the changes, generate:
-   - **PR Title**: A concise, descriptive title (max 72 characters) that summarizes the changes
+   - **PR Title**: A concise, descriptive title (max 72 characters) that summarizes the changes. Do not use conventional commit prefixes like "feat:", "fix:", etc.
    - **PR Description**: A detailed description including:
      - Summary of changes
      - List of modified files with brief descriptions
