@@ -39,12 +39,21 @@ generate_bats_test() {
     local test_command="$2"
     local expected_exit="${3:-0}"
     local trace_mode="${4:-false}"
-    shift 4
+    local skip_test="${5:-false}"
+    shift 5
     
     # Start test
     cat <<EOF
 @test "$test_name" {
 EOF
+
+    # Add skip if enabled
+    if [ "$skip_test" = "true" ]; then
+        echo "    skip"
+        echo "}"
+        echo ""
+        return
+    fi
 
     # Add trace output if enabled
     if [ "$trace_mode" = true ]; then
@@ -107,6 +116,7 @@ generate_bats_file() {
     local current_test_name=""
     local current_test_command=""
     local current_exit_code="0"
+    local current_skip="false"
     local current_assertions=()
     
     {
@@ -116,13 +126,14 @@ generate_bats_file() {
             if [[ "$line" =~ ^TEST:([0-9]+):name=(.+)$ ]]; then
                 # New test starting - output previous test if exists
                 if [ -n "$current_test_name" ]; then
-                    generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "${current_assertions[@]}"
+                    generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "$current_skip" "${current_assertions[@]}"
                 fi
                 
                 # Reset for new test
                 current_test_name="${BASH_REMATCH[2]}"
                 current_test_command=""
                 current_exit_code="0"
+                current_skip="false"
                 current_assertions=()
                 
             elif [[ "$line" =~ ^TEST:[0-9]+:command=(.+)$ ]]; then
@@ -158,12 +169,15 @@ generate_bats_file() {
                 current_assertions+=("# Verify stderr output")
                 current_assertions+=("[ \"\${lines[0]}\" = \"$stderr_val\" ] || [[ \"\$output\" == *\"$stderr_val\"* ]]")
                 current_assertions+=("")
+                
+            elif [[ "$line" =~ ^TEST:[0-9]+:skip=(.+)$ ]]; then
+                current_skip="${BASH_REMATCH[1]}"
             fi
         done
         
         # Output final test
         if [ -n "$current_test_name" ]; then
-            generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "${current_assertions[@]}"
+            generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "$current_skip" "${current_assertions[@]}"
         fi
     } > "$output_file"
     
