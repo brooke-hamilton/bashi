@@ -14,33 +14,35 @@ execute_bats_tests() {
     local timeout="${2:-300}"
     local tap_output="${3:-false}"
     local timing="${4:-false}"
+    # trace is accepted for API compatibility but handled in test generation, not execution
+    # shellcheck disable=SC2034
     local trace="${5:-false}"
     
-    check_file_exists "$bats_file" || return 1
+    check_file_exists "${bats_file}" || return 1
     
-    log_verbose "Executing Bats tests: $bats_file (timeout: ${timeout}s)"
+    log_verbose "Executing Bats tests: ${bats_file} (timeout: ${timeout}s)"
     
     # Build bats command with optional --tap and --timing flags
     # Note: trace is handled in test generation, not passed to bats
-    local bats_cmd="bats"
-    if [ "$tap_output" = true ]; then
-        bats_cmd="bats --tap"
+    local bats_cmd=("bats")
+    if [ "${tap_output}" = true ]; then
+        bats_cmd+=("--tap")
     fi
-    if [ "$timing" = true ]; then
-        bats_cmd="$bats_cmd --timing"
+    if [ "${timing}" = true ]; then
+        bats_cmd+=("--timing")
     fi
     
     # Check if timeout command is available
     if command -v timeout >/dev/null 2>&1; then
         # GNU timeout
-        timeout "${timeout}s" $bats_cmd "$bats_file"
+        timeout "${timeout}s" "${bats_cmd[@]}" "${bats_file}"
     elif command -v gtimeout >/dev/null 2>&1; then
         # GNU timeout on macOS (installed via coreutils)
-        gtimeout "${timeout}s" $bats_cmd "$bats_file"
+        gtimeout "${timeout}s" "${bats_cmd[@]}" "${bats_file}"
     else
         # No timeout available - run without timeout
         log_verbose "Warning: timeout command not available, running without timeout"
-        $bats_cmd "$bats_file"
+        "${bats_cmd[@]}" "${bats_file}"
     fi
     
     return $?
@@ -56,23 +58,23 @@ parse_tap_output() {
     local skipped=0
     
     while IFS= read -r line; do
-        if [[ "$line" =~ ^1\.\.([0-9]+)$ ]]; then
+        if [[ "${line}" =~ ^1\.\.\.([0-9]+)$ ]]; then
             total="${BASH_REMATCH[1]}"
-        elif [[ "$line" =~ ^ok ]]; then
-            if [[ "$line" =~ \#\ skip ]]; then
+        elif [[ "${line}" =~ ^ok ]]; then
+            if [[ "${line}" =~ \#\ skip ]]; then
                 ((skipped++)) || true
             else
                 ((passed++)) || true
             fi
-        elif [[ "$line" =~ ^not\ ok ]]; then
+        elif [[ "${line}" =~ ^not\ ok ]]; then
             ((failed++)) || true
         fi
     done
     
-    echo "Total: $total"
-    echo "Passed: $passed"
-    echo "Failed: $failed"
-    echo "Skipped: $skipped"
+    echo "Total: ${total}"
+    echo "Passed: ${passed}"
+    echo "Failed: ${failed}"
+    echo "Skipped: ${skipped}"
 }
 
 # report_results: Generate human-readable test results
@@ -81,17 +83,17 @@ report_results() {
     local exit_code="$1"
     local tap_file="${2:-}"
     
-    if [ "$exit_code" -eq 0 ]; then
+    if [ "${exit_code}" -eq 0 ]; then
         echo "✓ All tests passed"
     else
-        echo "✗ Some tests failed (exit code: $exit_code)"
+        echo "✗ Some tests failed (exit code: ${exit_code})"
     fi
     
-    if [ -n "$tap_file" ] && [ -f "$tap_file" ]; then
+    if [ -n "${tap_file}" ] && [ -f "${tap_file}" ]; then
         echo ""
         echo "Test Summary:"
-        parse_tap_output < "$tap_file"
+        parse_tap_output < "${tap_file}"
         echo "Outputting tap file:"
-        cat "$tap_file"
+        cat "${tap_file}"
     fi
 }

@@ -1,6 +1,7 @@
 #!/bin/bash
 # bashi - YAML-driven Bash test framework
 # https://github.com/brooke-hamilton/bashi
+# shellcheck source-path=SCRIPTDIR
 
 set -euo pipefail
 
@@ -9,10 +10,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Source library modules
+# shellcheck source=lib/utils.sh
 source "${SCRIPT_DIR}/lib/utils.sh"
+# shellcheck source=lib/validator.sh
 source "${SCRIPT_DIR}/lib/validator.sh"
+# shellcheck source=lib/processor.sh
 source "${SCRIPT_DIR}/lib/processor.sh"
+# shellcheck source=lib/generator.sh
 source "${SCRIPT_DIR}/lib/generator.sh"
+# shellcheck source=lib/executor.sh
 source "${SCRIPT_DIR}/lib/executor.sh"
 
 # Version

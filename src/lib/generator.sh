@@ -13,7 +13,7 @@ generate_bats_header() {
     
     cat <<EOF
 #!/usr/bin/env bats
-# Auto-generated from Bashi test suite: $suite_name
+# Auto-generated from Bashi test suite: ${suite_name}
 # Generated at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 setup() {
@@ -44,11 +44,11 @@ generate_bats_test() {
     
     # Start test
     cat <<EOF
-@test "$test_name" {
+@test "${test_name}" {
 EOF
 
     # Add skip if enabled
-    if [ "$skip_test" = "true" ]; then
+    if [ "${skip_test}" = "true" ]; then
         echo "    skip"
         echo "}"
         echo ""
@@ -56,23 +56,23 @@ EOF
     fi
 
     # Add trace output if enabled
-    if [ "$trace_mode" = true ]; then
+    if [ "${trace_mode}" = true ]; then
         cat <<'EOF'
     # Trace output
     echo "" >&3
     echo "# Running test: $BATS_TEST_DESCRIPTION" >&3
 EOF
-        echo "    echo '# Command: $test_command' >&3"
+        echo "    echo '# Command: ${test_command}' >&3"
     fi
     
     cat <<EOF
     # Execute command and capture output
-    run bash -c '$test_command'
+    run bash -c '${test_command}'
     
 EOF
 
     # Add trace output for results if enabled
-    if [ "$trace_mode" = true ]; then
+    if [ "${trace_mode}" = true ]; then
         cat <<'EOF'
     # Trace results
     echo "# Exit code: $status" >&3
@@ -87,8 +87,8 @@ EOF
     
     # Exit code assertion (always check)
     echo "    # Verify exit code"
-    echo "    if [ \$status -ne $expected_exit ]; then"
-    echo "        echo \"exit code: expected: $expected_exit, actual: \$status\" >&2"
+    echo "    if [ \$status -ne ${expected_exit} ]; then"
+    echo "        echo \"exit code: expected: ${expected_exit}, actual: \$status\" >&2"
     echo "        return 1"
     echo "    fi"
     echo ""
@@ -110,7 +110,7 @@ generate_bats_file() {
     local output_file="$2"
     local trace_mode="${3:-false}"
     
-    log_verbose "Generating Bats file: $output_file"
+    log_verbose "Generating Bats file: ${output_file}"
     
     # Read all processed test data and organize by test
     local current_test_name=""
@@ -120,13 +120,13 @@ generate_bats_file() {
     local current_assertions=()
     
     {
-        generate_bats_header "$suite_name"
+        generate_bats_header "${suite_name}"
         
         while IFS= read -r line; do
-            if [[ "$line" =~ ^TEST:([0-9]+):name=(.+)$ ]]; then
+            if [[ "${line}" =~ ^TEST:([0-9]+):name=(.+)$ ]]; then
                 # New test starting - output previous test if exists
-                if [ -n "$current_test_name" ]; then
-                    generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "$current_skip" "${current_assertions[@]}"
+                if [ -n "${current_test_name}" ]; then
+                    generate_bats_test "${current_test_name}" "${current_test_command}" "${current_exit_code}" "${trace_mode}" "${current_skip}" "${current_assertions[@]}"
                 fi
                 
                 # Reset for new test
@@ -136,53 +136,53 @@ generate_bats_file() {
                 current_skip="false"
                 current_assertions=()
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:command=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:command=(.+)$ ]]; then
                 current_test_command="${BASH_REMATCH[1]}"
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:exitCode=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:exitCode=(.+)$ ]]; then
                 current_exit_code="${BASH_REMATCH[1]}"
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:outputContains=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:outputContains=(.+)$ ]]; then
                 local contains="${BASH_REMATCH[1]}"
                 current_assertions+=("# Verify stdout contains expected text")
-                current_assertions+=("[[ \"\$output\" == *\"$contains\"* ]]")
+                current_assertions+=("[[ \"\$output\" == *\"${contains}\"* ]]")
                 current_assertions+=("")
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:outputEquals=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:outputEquals=(.+)$ ]]; then
                 local equals="${BASH_REMATCH[1]}"
                 current_assertions+=("# Verify stdout equals expected value")
-                current_assertions+=("[ \"\$output\" = \"$equals\" ]")
+                current_assertions+=("[ \"\$output\" = \"${equals}\" ]")
                 current_assertions+=("")
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:outputMatches=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:outputMatches=(.+)$ ]]; then
                 local matches="${BASH_REMATCH[1]}"
                 # Strip surrounding quotes if present
                 matches="${matches#\"}"
                 matches="${matches%\"}"
                 current_assertions+=("# Verify stdout matches regex")
-                current_assertions+=("local regex='$matches'")
+                current_assertions+=("local regex='${matches}'")
                 current_assertions+=("[[ \"\$output\" =~ \$regex ]]")
                 current_assertions+=("")
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:stderr=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:stderr=(.+)$ ]]; then
                 local stderr_val="${BASH_REMATCH[1]}"
                 current_assertions+=("# Verify stderr output")
-                current_assertions+=("[ \"\${lines[0]}\" = \"$stderr_val\" ] || [[ \"\$output\" == *\"$stderr_val\"* ]]")
+                current_assertions+=("[ \"\${lines[0]}\" = \"${stderr_val}\" ] || [[ \"\$output\" == *\"${stderr_val}\"* ]]")
                 current_assertions+=("")
                 
-            elif [[ "$line" =~ ^TEST:[0-9]+:skip=(.+)$ ]]; then
+            elif [[ "${line}" =~ ^TEST:[0-9]+:skip=(.+)$ ]]; then
                 current_skip="${BASH_REMATCH[1]}"
             fi
         done
         
         # Output final test
-        if [ -n "$current_test_name" ]; then
-            generate_bats_test "$current_test_name" "$current_test_command" "$current_exit_code" "$trace_mode" "$current_skip" "${current_assertions[@]}"
+        if [ -n "${current_test_name}" ]; then
+            generate_bats_test "${current_test_name}" "${current_test_command}" "${current_exit_code}" "${trace_mode}" "${current_skip}" "${current_assertions[@]}"
         fi
-    } > "$output_file"
+    } > "${output_file}"
     
     # Make executable
-    chmod +x "$output_file"
+    chmod +x "${output_file}"
     
-    log_verbose "Generated Bats file: $output_file"
+    log_verbose "Generated Bats file: ${output_file}"
 }
