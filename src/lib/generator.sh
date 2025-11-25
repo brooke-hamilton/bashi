@@ -62,12 +62,27 @@ EOF
     echo "" >&3
     echo "# Running test: $BATS_TEST_DESCRIPTION" >&3
 EOF
-        echo "    echo '# Command: ${test_command}' >&3"
+        # For trace, show command with actual newlines for readability
+        local display_command="${test_command}"
+        # shellcheck disable=SC2001
+        display_command=$(echo "${display_command}" | sed 's/\\n/\n/g')
+        echo "    echo '# Command: ${display_command}' >&3"
     fi
+    
+    # Escape the command properly for bash -c with double quotes
+    # Need to escape backslashes, double quotes, dollar signs, and backticks
+    local escaped_command="${test_command}"
+    escaped_command="${escaped_command//\\/\\\\}"  # Escape backslashes first
+    escaped_command="${escaped_command//\"/\\\"}"  # Escape double quotes
+    escaped_command="${escaped_command//\$/\\\$}"  # Escape dollar signs
+    escaped_command="${escaped_command//\`/\\\`}"  # Escape backticks
+    # Now decode the \n to actual newlines using printf
+    # shellcheck disable=SC2001
+    escaped_command=$(printf '%b' "${escaped_command}")
     
     cat <<EOF
     # Execute command and capture output
-    run bash -c '${test_command}'
+    run bash -c "${escaped_command}"
     
 EOF
 
@@ -138,6 +153,9 @@ generate_bats_file() {
                 
             elif [[ "${line}" =~ ^TEST:[0-9]+:command=(.+)$ ]]; then
                 current_test_command="${BASH_REMATCH[1]}"
+                # Decode literal \n back to actual newlines
+                # shellcheck disable=SC2001
+                current_test_command=$(echo "${current_test_command}" | sed 's/\\n/\n/g')
                 
             elif [[ "${line}" =~ ^TEST:[0-9]+:exitCode=(.+)$ ]]; then
                 current_exit_code="${BASH_REMATCH[1]}"

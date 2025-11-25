@@ -86,22 +86,44 @@
           "default": 0
         },
         "outputContains": {
-          "type": "array",
-          "description": "Strings that must appear in stdout (all must match - AND logic)",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "minItems": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "String that must appear in stdout",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "description": "Strings that must appear in stdout (all must match - AND logic)",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "outputEquals": {
           "type": "string",
           "description": "Exact expected stdout (character-for-character match including whitespace)"
         },
         "outputMatches": {
-          "type": "string",
-          "description": "POSIX ERE regex pattern that stdout must match",
-          "minLength": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "POSIX ERE regex pattern that stdout must match",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "description": "POSIX ERE regex patterns that stdout must match (all must match - AND logic)",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "stderr": {
           "type": "string",
@@ -148,18 +170,39 @@
           "maximum": 255
         },
         "outputContains": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "outputEquals": {
           "type": "string"
         },
         "outputMatches": {
-          "type": "string",
-          "minLength": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "stderr": {
           "type": "string"

@@ -84,6 +84,10 @@ process_test_suite() {
         # Apply variable substitution to command
         test_command=$(substitute_variables "${test_command}" "${vars_array[@]}")
         
+        # Encode newlines as literal \n for safe transport
+        # shellcheck disable=SC2001
+        test_command=$(echo "${test_command}" | sed ':a;N;$!ba;s/\n/\\n/g')
+        
         # Output processed test info
         echo "TEST:${i}:name=${test_name}"
         echo "TEST:${i}:command=${test_command}"
@@ -95,12 +99,23 @@ process_test_suite() {
             echo "TEST:${i}:exitCode=${exit_code}"
         fi
         
-        local output_contains
-        output_contains=$(yq eval ".tests[${i}].outputContains[]" "${yaml_file}" 2>/dev/null || true)
-        if [ -n "${output_contains}" ]; then
-            while IFS= read -r line; do
-                [ -n "${line}" ] && echo "TEST:${i}:outputContains=$(substitute_variables "${line}" "${vars_array[@]}")"
-            done <<< "${output_contains}"
+        # Handle outputContains - can be string or array
+        local output_contains_type
+        output_contains_type=$(yq eval ".tests[${i}].outputContains | type" "${yaml_file}")
+        if [ "${output_contains_type}" = "!!seq" ]; then
+            # It's an array - process each element
+            local output_contains_items
+            output_contains_items=$(yq eval ".tests[${i}].outputContains[]" "${yaml_file}" 2>/dev/null || true)
+            if [ -n "${output_contains_items}" ]; then
+                while IFS= read -r line; do
+                    [ -n "${line}" ] && echo "TEST:${i}:outputContains=$(substitute_variables "${line}" "${vars_array[@]}")"
+                done <<< "${output_contains_items}"
+            fi
+        elif [ "${output_contains_type}" = "!!str" ]; then
+            # It's a string - process as single value
+            local output_contains
+            output_contains=$(yq eval ".tests[${i}].outputContains" "${yaml_file}")
+            echo "TEST:${i}:outputContains=$(substitute_variables "${output_contains}" "${vars_array[@]}")"
         fi
         
         local output_equals
@@ -110,9 +125,22 @@ process_test_suite() {
             echo "TEST:${i}:outputEquals=${output_equals}"
         fi
         
-        local output_matches
-        output_matches=$(yq eval ".tests[${i}].outputMatches" "${yaml_file}")
-        if [ "${output_matches}" != "null" ]; then
+        # Handle outputMatches - can be string or array
+        local output_matches_type
+        output_matches_type=$(yq eval ".tests[${i}].outputMatches | type" "${yaml_file}")
+        if [ "${output_matches_type}" = "!!seq" ]; then
+            # It's an array - process each element
+            local output_matches_items
+            output_matches_items=$(yq eval ".tests[${i}].outputMatches[]" "${yaml_file}" 2>/dev/null || true)
+            if [ -n "${output_matches_items}" ]; then
+                while IFS= read -r line; do
+                    [ -n "${line}" ] && echo "TEST:${i}:outputMatches=$(substitute_variables "${line}" "${vars_array[@]}")"
+                done <<< "${output_matches_items}"
+            fi
+        elif [ "${output_matches_type}" = "!!str" ]; then
+            # It's a string - process as single value
+            local output_matches
+            output_matches=$(yq eval ".tests[${i}].outputMatches" "${yaml_file}")
             output_matches=$(substitute_variables "${output_matches}" "${vars_array[@]}")
             echo "TEST:${i}:outputMatches=${output_matches}"
         fi

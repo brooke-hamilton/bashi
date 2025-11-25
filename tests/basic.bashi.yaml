@@ -25,3 +25,12 @@ tests:
     command: echo "This test will be skipped"
     skip: true
     exitCode: 1
+
+  - name: Multi-line command test
+    command: |
+      echo "this is a line1 test"
+      echo "this is a line 2 test"
+    exitCode: 0
+    outputContains:
+      - "line1"
+      - "line 2"
