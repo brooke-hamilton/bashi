@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # validator.sh - YAML validation against schema
-# Implements FR-001: Schema validation using yq
 
 set -euo pipefail
 
@@ -22,12 +21,12 @@ validate_yaml_syntax() {
     return 0
 }
 
-# validate_schema: Validate YAML against test-suite-schema.json
+# validate_schema: Validate YAML against bashi-schema.json
 # Args: $1 = YAML file path
 # Returns: 0 if valid, 1 if invalid
 validate_schema() {
     local yaml_file="$1"
-    local schema_file="${PROJECT_ROOT}/test-suite-schema.json"
+    local schema_file="${PROJECT_ROOT}/src/bashi-schema.json"
     
     check_file_exists "${yaml_file}" || return 1
     check_file_exists "${schema_file}" || return 1

@@ -1,17 +1,18 @@
-# bashi Development Guidelines
+# Copilot Instructions for Bashi
 
-Auto-generated from all feature plans. Last updated: 2025-11-06
+## Project Guidelines
 
-## Active Technologies
-- Bash 3.2+ (macOS and Linux compatibility requirement) + `yq` (YAML processor), Bats-core (test execution engine) (002-bashi-implementation)
-- File-based (YAML test files, generated Bats scripts in temp directory) (002-bashi-implementation)
+When working on this repository, follow the project constitution located at `.github/memory/constitution.md`. This document defines the core principles, coding standards, and architectural decisions for Bashi.
 
-- Bash 3.2+ (macOS and Linux compatibility requirement) + Bats-core (external test execution engine), optional: yq or jq for YAML parsing (001-yaml-schema)
+## Key Principles
 
-## Project Structure
+- **Dependency-First**: Bats-core is a dependency, not a fork. Do not reimplement Bats-core features.
+- **Bash 3.2+ Compatibility**: All shell code must work with Bash 3.2 and later.
+- **YAML Schema Design**: Test definitions should be declarative and intuitive.
+- **Code Quality**: Follow shellcheck rules, use strict mode (`set -euo pipefail`), and quote all variables.
 
-```text
-src/
-tests/
-```
+## Before Making Changes
 
+1. Read `.github/memory/constitution.md` for full project guidelines
+2. Run `make lint` to verify shellcheck compliance
+3. Run `make test` to ensure tests pass

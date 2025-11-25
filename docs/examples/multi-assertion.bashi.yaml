@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# yaml-language-server: $schema=../../src/bashi-schema.json
 # Multiple Assertions Example
 # Demonstrates: AND logic - all assertions must pass
 

@@ -56,7 +56,7 @@ Validate examples against the JSON Schema:
 
 ```bash
 # Using ajv-cli (npm install -g ajv-cli)
-ajv validate -s ../contracts/test-suite-schema.json -d "*.bashi.yml"
+ajv validate -s ../../src/bashi-schema.json -d "*.bashi.yml"
 ```
 
 ## Learning Path

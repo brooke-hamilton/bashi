@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# yaml-language-server: $schema=../../src/bashi-schema.json
 # Basic Test Example
 # Demonstrates: Simple test with exit code and output validation
 

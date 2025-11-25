@@ -23,37 +23,22 @@ Bashi is a declarative testing framework that allows you to define CLI tests in 
 - [yq](https://github.com/mikefarah/yq) v4+ (YAML processor)
 - [Bats-core](https://github.com/bats-core/bats-core) (test execution engine)
 
-### Install Dependencies
-
-**yq (Linux):**
-
-```bash
-wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-chmod +x /usr/local/bin/yq
-```
-
-**yq (macOS):**
-
-```bash
-brew install yq
-```
-
-**Bats-core:**
-
-```bash
-npm install -g bats
-# OR
-brew install bats-core
-```
-
 ### Install Bashi
 
-```bash
-git clone https://github.com/brooke-hamilton/bashi.git
-cd bashi
-# Add src/bashi to your PATH
-export PATH="$PWD/src:$PATH"
-```
+Bashi does not have releases yet, and is not published to package managers. A simple way to install Bashi is to clone the repository and create a command alias that points to the full path.
+
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/brooke-hamilton/bashi.git
+    cd bashi
+    ```
+
+1. Alias the full path to the `bashi` script. You can add this to your shell profile (e.g., `~/.bashrc` or `~/.zshrc`):
+
+    ```bash
+    alias bashi='<path to cloned repo>/src/bashi'
+    ```
 
 ## Quick Start
 
@@ -96,13 +81,13 @@ bashi my-tests.bashi.yaml
 ## Usage
 
 ```bash
-bashi [OPTIONS] <test-suite.yaml>
+bashi [OPTIONS] <test-suite.bashi.yaml>
 
 OPTIONS:
-    -h, --help              Show help message
-    --version               Show version information
-    -v, --verbose           Enable verbose output
-    --validate-only         Only validate the YAML schema
+    -h, --help              Show this help message
+    -v, --version           Show version information
+    --verbose               Enable verbose output
+    --validate-only         Only validate the YAML schema, don't run tests
     -t, --tap               Output in TAP format instead of pretty print
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
@@ -158,10 +143,14 @@ tests:
 
 ## Examples
 
-See `tests/fixtures/` directory for more examples:
+See the `docs/examples/` directory for more examples:
 
-- `basic.bashi.yaml` - Simple test examples
-- Additional examples coming soon
+- `basic-test.bashi.yaml` - Minimal test example
+- `multi-assertion.bashi.yaml` - Multiple output assertions
+- `variables.bashi.yaml` - Variable substitution
+- `setup-teardown.bashi.yaml` - Test lifecycle management
+- `fragments.bashi.yaml` - Reusable test patterns
+- `complete-suite.bashi.yaml` - Full-featured test suite
 
 ## Exit Codes
 
@@ -177,17 +166,17 @@ See `tests/fixtures/` directory for more examples:
 .
 ├── src/
 │   ├── bashi              # Main executable
+│   ├── bashi-schema.json  # JSON Schema definition
 │   └── lib/               # Library modules
 │       ├── utils.sh       # Common utilities
 │       ├── validator.sh   # Schema validation
 │       ├── processor.sh   # YAML processing
 │       ├── generator.sh   # Bats generation
 │       └── executor.sh    # Test execution
-├── tests/
-│   ├── fixtures/          # Test fixtures
-│   ├── integration/       # Integration tests
-│   └── unit/              # Unit tests
-└── test-suite-schema.json # JSON Schema definition
+└── tests/
+    ├── fixtures/          # Test fixtures
+    ├── integration/       # Integration tests
+    └── unit/              # Unit tests
 ```
 
 ### Running Tests
