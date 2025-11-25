@@ -1,81 +1,83 @@
+
 ---
-description: Automates the creation of a GitHub pull request from the current branch with validation and content generation
-name: create-gh-pr
+agent: agent
+description: Automates GitHub pull request creation from the current branch
+name: radius.create-pr
+model: Claude Opus 4.5 (Preview) (copilot)
+tools:
+  ['runCommands', 'edit', 'search', 'fetch', 'githubRepo', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest'
 ---
 
 # Create GitHub Pull Request
 
-You are a GitHub automation assistant that creates pull requests from the current branch.
+Create a pull request from the current branch following the steps below.
 
-## Instructions
+## Determining the Default Branch
 
-Follow these steps in order:
+When working with forks, the default branch must come from the correct remote:
 
-### Step 1: Validate Current Branch
-1. Get the current git branch name
-2. Verify the branch exists on the remote server
-3. If the branch doesn't exist remotely, stop and inform the user
+- If `upstream` exists in `git remote -v`: use `git remote show upstream | grep 'HEAD branch'`
+- Otherwise: use `git remote show origin | grep 'HEAD branch'`
 
-### Step 2: Ensure All Changes Are Committed and Pushed
-1. Check for uncommitted changes using `git status`
-2. Check for unpushed commits using `git rev-list --count @{u}..HEAD`
-3. If there are uncommitted changes or unpushed commits, stop and inform the user that they must:
-   - Commit all changes
-   - Push all commits to the remote branch
+## Steps
 
-### Step 3: Check for Pull Request Template
-1. Check if a PR template exists in the repository at common locations:
-   - `.github/PULL_REQUEST_TEMPLATE.md`
-   - `.github/pull_request_template.md`
-   - `docs/PULL_REQUEST_TEMPLATE.md`
-   - `PULL_REQUEST_TEMPLATE.md`
-2. If a template exists, read its contents to use as the format for the PR description
-3. If no template exists, proceed with a standard format
+### Step 1: Validate Branch State
 
-### Step 4: Analyze Changes and Generate PR Content
-1. Get the repository's default branch (typically `main` or `master`)
-2. Compare the current branch with the default branch using `git diff`
-3. Examine the commit messages between the branches
-4. Based on the changes, generate:
-   - **PR Title**: A concise, descriptive title (max 72 characters) that summarizes the changes. Do not use conventional commit prefixes like "feat:", "fix:", etc.
-   - **PR Description**: 
-     - If a PR template was found, follow its structure and fill in the appropriate sections
-     - If the template contains checkboxes, mark them appropriately based on the changes made
-     - If no template exists, create a detailed description including:
-       - Summary of changes
-       - List of modified files with brief descriptions
-       - Any relevant context from commit messages
+Stop and inform the user if any of these conditions exist:
 
-### Step 5: Create the Pull Request
-1. Use the GitHub MCP tool `mcp_github_create_pull_request` to create the PR
-2. Use the current branch as the `head` branch
-3. Use the default branch as the `base` branch
-4. Include the generated title and description
+- Current branch has no remote tracking branch (`git rev-parse --abbrev-ref --symbolic-full-name @{u}`)
+- Uncommitted changes exist (`git status --porcelain`)
+- Unpushed commits exist (`git rev-list --count @{u}..HEAD` returns > 0)
 
-### Step 6: Return PR URL
-1. Extract the PR URL from the creation response
-2. Display the URL to the user with a success message
+### Step 2: Load PR Template
 
-## Error Handling
+Check for a PR template at these locations (in order):
 
-- If any step fails, stop immediately and provide a clear error message
-- Common errors to handle:
-  - Branch not on remote
-  - Uncommitted changes
-  - Unpushed commits
-  - PR already exists for this branch
-  - Insufficient GitHub permissions
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/pull_request_template.md`
+- `docs/PULL_REQUEST_TEMPLATE.md`
+- `PULL_REQUEST_TEMPLATE.md`
 
-## Output Format
+Use the first template found to structure the PR description.
 
-Provide concise progress updates for each step, and end with:
+### Step 3: Generate PR Content
+
+Analyze the changes using `git diff` and `git log` against the default branch.
+
+**PR Title Requirements:**
+
+- Maximum 80 characters
+- Use noun phrases, not imperative verbs (e.g., "Authentication improvements for API endpoints" not "Add authentication to API")
+- No conventional commit prefixes (`feat:`, `fix:`, etc.)
+- Capitalize the first word
+
+**PR Description:**
+
+- Follow the PR template structure if one exists
+- Preserve checkboxes from the template (do not convert to bullets)
+- If no template: summarize changes, list modified files, include relevant commit context
+
+### Step 4: Create the Pull Request
+
+Create the PR using the GitHub MCP tool, falling back to `gh pr create` if unavailable.
+
+- **head**: current branch
+- **base**: default branch (from Step 1)
+
+### Step 5: Report Result
+
+Display the PR URL:
+
 ```
 ✅ Pull request created successfully!
 🔗 URL: [PR_URL]
 ```
 
-## Required Tools
+## Error Handling
 
-- Terminal commands for git operations
-- GitHub MCP tools for PR creation
-- File reading for repository information
+Stop immediately on any failure with a clear error message. Common errors:
+
+- Branch not pushed to remote
+- Uncommitted or unpushed changes
+- PR already exists for this branch
+- Insufficient GitHub permissions
