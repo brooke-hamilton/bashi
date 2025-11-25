@@ -23,7 +23,7 @@ check_dependencies() {
         echo "Error: Missing required dependencies: ${missing[*]}" >&2
         echo "Please install:" >&2
         for dep in "${missing[@]}"; do
-            case "$dep" in
+            case "${dep}" in
                 yq)
                     echo "  yq: https://github.com/mikefarah/yq" >&2
                     ;;
@@ -44,13 +44,13 @@ check_dependencies() {
 check_file_exists() {
     local file="$1"
     
-    if [ ! -f "$file" ]; then
-        echo "Error: File not found: $file" >&2
+    if [ ! -f "${file}" ]; then
+        echo "Error: File not found: ${file}" >&2
         return 1
     fi
     
-    if [ ! -r "$file" ]; then
-        echo "Error: File not readable: $file" >&2
+    if [ ! -r "${file}" ]; then
+        echo "Error: File not readable: ${file}" >&2
         return 1
     fi
     
