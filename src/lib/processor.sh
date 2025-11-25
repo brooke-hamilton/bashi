@@ -114,9 +114,22 @@ process_test_suite() {
             echo "TEST:${i}:outputEquals=${output_equals}"
         fi
         
-        local output_matches
-        output_matches=$(yq eval ".tests[${i}].outputMatches" "${yaml_file}")
-        if [ "${output_matches}" != "null" ]; then
+        # Handle outputMatches - can be string or array
+        local output_matches_type
+        output_matches_type=$(yq eval ".tests[${i}].outputMatches | type" "${yaml_file}")
+        if [ "${output_matches_type}" = "!!seq" ]; then
+            # It's an array - process each element
+            local output_matches_items
+            output_matches_items=$(yq eval ".tests[${i}].outputMatches[]" "${yaml_file}" 2>/dev/null || true)
+            if [ -n "${output_matches_items}" ]; then
+                while IFS= read -r line; do
+                    [ -n "${line}" ] && echo "TEST:${i}:outputMatches=$(substitute_variables "${line}" "${vars_array[@]}")"
+                done <<< "${output_matches_items}"
+            fi
+        elif [ "${output_matches_type}" = "!!str" ]; then
+            # It's a string - process as single value
+            local output_matches
+            output_matches=$(yq eval ".tests[${i}].outputMatches" "${yaml_file}")
             output_matches=$(substitute_variables "${output_matches}" "${vars_array[@]}")
             echo "TEST:${i}:outputMatches=${output_matches}"
         fi

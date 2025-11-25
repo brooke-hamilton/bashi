@@ -99,9 +99,22 @@
           "description": "Exact expected stdout (character-for-character match including whitespace)"
         },
         "outputMatches": {
-          "type": "string",
-          "description": "POSIX ERE regex pattern that stdout must match",
-          "minLength": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "POSIX ERE regex pattern that stdout must match",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "description": "POSIX ERE regex patterns that stdout must match (all must match - AND logic)",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "stderr": {
           "type": "string",
@@ -158,8 +171,20 @@
           "type": "string"
         },
         "outputMatches": {
-          "type": "string",
-          "minLength": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "stderr": {
           "type": "string"
