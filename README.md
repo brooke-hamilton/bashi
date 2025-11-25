@@ -4,7 +4,7 @@ YAML-driven Bash test framework using Bats-core
 
 ## Overview
 
-Bashi is a declarative testing framework that allows you to define CLI tests in YAML and execute them using Bats-core. Write your tests once in a simple YAML format, and Bashi handles the rest - validation, variable substitution, test generation, and execution.
+Bashi is a declarative testing framework for command-line tools that allows you to define CLI tests in YAML and execute them using Bats-core. Write your tests once in a simple YAML format, and Bashi handles the rest - validation, variable substitution, test generation, and execution.
 
 ## Features
 
