@@ -8,6 +8,7 @@ description: Test suite to verify command-line options handling. Uses bashi to t
 
 variables:
   bashi: $(pwd)/src/bashi
+  matchTiming: "in [0-9]+ms"
   matchTapCount: 1\.\.[1-9][0-9]*
 
 tests:
@@ -43,7 +44,7 @@ tests:
   - name: Timings Option
     command: "{{bashi}} ./tests/basic.bashi.yaml --timing --no-color"
     exitCode: 0
-    outputMatches: "in [0-9]+ms"
+    outputMatches: "{{matchTiming}}"
 
   - name: Short help option (-h)
     command: "{{bashi}} -h"
@@ -87,14 +88,13 @@ tests:
   - name: Short TAP format option (-t)
     command: "{{bashi}} -t ./tests/basic.bashi.yaml"
     exitCode: 0
-    outputContains:
-      - "ok 1"
+    outputContains: "ok 1"
     outputMatches: "{{matchTapCount}}"
 
   - name: Timing option (short form -T)
     command: "{{bashi}} -T ./tests/basic.bashi.yaml --no-color"
     exitCode: 0
-    outputMatches: "in [0-9]+ms"
+    outputMatches: "{{matchTiming}}"
 
   - name: Trace option (-x)
     command: "{{bashi}} -x ./tests/basic.bashi.yaml"
@@ -131,15 +131,16 @@ tests:
     exitCode: 0
     outputContains:
       - "Echo test with variable substitution"
-    outputMatches: "in [0-9]+ms"
+    outputMatches: "{{matchTiming}}"
 
   - name: Multiple options with TAP format
     command: "{{bashi}} --tap --timing ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
       - "ok 1"
-    outputMatches: "in [0-9]+ms"
-      #- "{{matchTapCount}}"
+    outputMatches:
+      - "{{matchTiming}}"
+      - "{{matchTapCount}}"
 
   - name: Invalid option handling
     command: "{{bashi}} --invalid-option ./tests/basic.bashi.yaml"

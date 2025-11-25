@@ -86,13 +86,22 @@
           "default": 0
         },
         "outputContains": {
-          "type": "array",
-          "description": "Strings that must appear in stdout (all must match - AND logic)",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "minItems": 1
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "String that must appear in stdout",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "description": "Strings that must appear in stdout (all must match - AND logic)",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "outputEquals": {
           "type": "string",
@@ -161,11 +170,20 @@
           "maximum": 255
         },
         "outputContains": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
         },
         "outputEquals": {
           "type": "string"

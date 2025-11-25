@@ -99,12 +99,23 @@ process_test_suite() {
             echo "TEST:${i}:exitCode=${exit_code}"
         fi
         
-        local output_contains
-        output_contains=$(yq eval ".tests[${i}].outputContains[]" "${yaml_file}" 2>/dev/null || true)
-        if [ -n "${output_contains}" ]; then
-            while IFS= read -r line; do
-                [ -n "${line}" ] && echo "TEST:${i}:outputContains=$(substitute_variables "${line}" "${vars_array[@]}")"
-            done <<< "${output_contains}"
+        # Handle outputContains - can be string or array
+        local output_contains_type
+        output_contains_type=$(yq eval ".tests[${i}].outputContains | type" "${yaml_file}")
+        if [ "${output_contains_type}" = "!!seq" ]; then
+            # It's an array - process each element
+            local output_contains_items
+            output_contains_items=$(yq eval ".tests[${i}].outputContains[]" "${yaml_file}" 2>/dev/null || true)
+            if [ -n "${output_contains_items}" ]; then
+                while IFS= read -r line; do
+                    [ -n "${line}" ] && echo "TEST:${i}:outputContains=$(substitute_variables "${line}" "${vars_array[@]}")"
+                done <<< "${output_contains_items}"
+            fi
+        elif [ "${output_contains_type}" = "!!str" ]; then
+            # It's a string - process as single value
+            local output_contains
+            output_contains=$(yq eval ".tests[${i}].outputContains" "${yaml_file}")
+            echo "TEST:${i}:outputContains=$(substitute_variables "${output_contains}" "${vars_array[@]}")"
         fi
         
         local output_equals
