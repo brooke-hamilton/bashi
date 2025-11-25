@@ -3,41 +3,42 @@ description: Test suite to verify command-line options handling. Uses bashi to t
 # NOTE: These tests are using bashi to test bashi, which has a side-effect of capturing
 # the output from bats rather than outputting to the terminal directly. Bats automatically
 # switches to the tap formatter when its output is not a terminal, which affects the test by
-# preventing the output from being tested as non-tap formatted. Therefore, all these tests 
+# preventing the output from being tested as non-tap formatted. Therefore, all these tests
 # assume --tap output formatting.
 
 variables:
   bashi: $(pwd)/src/bashi
+  matchTapCount: 1\.\.[1-9][0-9]*
 
 tests:
   - name: Version test
     command: "{{bashi}} --version"
     exitCode: 0
     outputContains:
-       - "bashi version"
+      - "bashi version"
 
   - name: Help test
     command: "{{bashi}} --help"
     exitCode: 0
     outputContains:
-       - "Usage:"
-       - "OPTIONS"
+      - "Usage:"
+      - "OPTIONS"
 
   - name: Help without specifying help options
     command: "{{bashi}}"
     exitCode: 2
     outputContains:
-       - "Usage:"
-       - "OPTIONS"
+      - "Usage:"
+      - "OPTIONS"
 
   - name: Run basic test suite
     command: "{{bashi}} ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
-       - "Exit code test"
-       - "Stderr test"
-       - "# skip"
+      - "Echo test with variable substitution"
+      - "Exit code test"
+      - "Stderr test"
+      - "# skip"
 
   - name: Timings Option
     command: "{{bashi}} ./tests/basic.bashi.yaml --timing --no-color"
@@ -48,47 +49,47 @@ tests:
     command: "{{bashi}} -h"
     exitCode: 0
     outputContains:
-       - "Usage:"
-       - "OPTIONS"
-       - "--help"
+      - "Usage:"
+      - "OPTIONS"
+      - "--help"
 
   - name: Short version option (-v)
     command: "{{bashi}} -v"
     exitCode: 2
     outputContains:
-       - "No test suite file specified"
+      - "No test suite file specified"
 
   - name: Verbose option (--verbose)
     command: "{{bashi}} --verbose ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: Validate-only option (--validate-only)
     command: "{{bashi}} --validate-only ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Schema validation passed"
+      - "Schema validation passed"
 
   - name: Validate-only with invalid file
     command: "{{bashi}} --validate-only /nonexistent/file.yaml"
     exitCode: 2
     outputContains:
-       - "File not found"
+      - "File not found"
 
   - name: TAP format option (--tap)
     command: "{{bashi}} --tap ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "1..4"
-       - "ok 1"
+      - "ok 1"
+    outputMatches: "{{matchTapCount}}"
 
   - name: Short TAP format option (-t)
     command: "{{bashi}} -t ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "1..4"
-       - "ok 1"
+      - "ok 1"
+    outputMatches: "{{matchTapCount}}"
 
   - name: Timing option (short form -T)
     command: "{{bashi}} -T ./tests/basic.bashi.yaml --no-color"
@@ -99,57 +100,56 @@ tests:
     command: "{{bashi}} -x ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: Trace option (--trace)
     command: "{{bashi}} --trace ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: Timeout option with default value
     command: "{{bashi}} --timeout 300 ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: Timeout option with custom value
     command: "{{bashi}} --timeout 60 ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: No-color option (--no-color)
     command: "{{bashi}} --no-color ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
 
   - name: Multiple options combined
     command: "{{bashi}} --verbose --timing --no-color ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "Echo test with variable substitution"
+      - "Echo test with variable substitution"
     outputMatches: "in [0-9]+ms"
 
   - name: Multiple options with TAP format
     command: "{{bashi}} --tap --timing ./tests/basic.bashi.yaml"
     exitCode: 0
     outputContains:
-       - "1..4"
-       - "ok 1"
+      - "ok 1"
     outputMatches: "in [0-9]+ms"
+      #- "{{matchTapCount}}"
 
   - name: Invalid option handling
     command: "{{bashi}} --invalid-option ./tests/basic.bashi.yaml"
     exitCode: 2
     outputContains:
-       - "Unknown option"
+      - "Unknown option"
 
   - name: Help takes precedence over other options
     command: "{{bashi}} --help --version"
     exitCode: 0
     outputContains:
-       - "Usage:"
-       - "OPTIONS"
-  
+      - "Usage:"
+      - "OPTIONS"

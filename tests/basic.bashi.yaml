@@ -29,8 +29,8 @@ tests:
   - name: Multi-line command test
     command: |
       echo "this is a line1 test"
-      echo "this is a line2 test"
+      echo "this is a line 2 test"
     exitCode: 0
     outputContains:
       - "line1"
-      - "line2"
+      - "line 2"
