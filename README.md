@@ -87,7 +87,7 @@ OPTIONS:
     -h, --help              Show this help message
     -v, --version           Show version information
     --verbose               Enable verbose output
-    --validate-only         Only validate the YAML schema, don't run tests
+    --validate-only         Only validate the YAML schema, do not run tests
     -t, --tap               Output in TAP format instead of pretty print
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
