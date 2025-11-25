@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # processor.sh - YAML processing and variable substitution
-# Implements FR-002: Variable substitution with {{var}} syntax
 
 set -euo pipefail
 

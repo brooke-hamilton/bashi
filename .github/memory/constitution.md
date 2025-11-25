@@ -1,28 +1,3 @@
-<!--
-Sync Impact Report - Version 1.0.1 (Shellcheck Compliance)
-==========================================================
-Version Change: 1.0.0 → 1.0.1
-Rationale: PATCH - Added shellcheck compliance requirement to existing code quality standards
-
-Modified Principles:
-  - Principle V (Code Quality Standards): Added shellcheck compliance requirements
-
-Added Requirements:
-  - Shellcheck adherence mandatory with explicit overrides documented
-  - Code reviews must verify shellcheck compliance
-  - Enhanced rationale explaining shellcheck benefits
-
-Removed Sections: N/A
-
-Template Consistency:
-  ✅ .specify/templates/plan-template.md - No changes needed
-  ✅ .specify/templates/spec-template.md - No changes needed
-  ✅ .specify/templates/tasks-template.md - No changes needed
-  ✅ .github/prompts/*.prompt.md - No changes needed
-
-Follow-up TODOs: None
--->
-
 # Bashi Constitution
 
 ## Core Principles

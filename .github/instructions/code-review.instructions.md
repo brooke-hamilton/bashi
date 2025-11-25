@@ -23,6 +23,8 @@ This file defines code review expectations for all code in the bashi repository.
 - Check that changes align with the project's modular architecture (processor, generator, validator, executor, utils)
 - Ensure new features have corresponding tests in `tests/` directory
 - Make sure the README.md file is up-to-date with the code, especially when command-line options change.
+- Make sure that the examples in ./docs/examples/ are updated when features are added or changed.
+- IMPORTANT: When the bashi-schema.json file is changed, ensure that all example test files in ./docs/examples/ are updated to conform to the new schema and any examples in the README.md file are also updated.
 
 ## Naming Conventions
 
@@ -68,7 +70,7 @@ This file defines code review expectations for all code in the bashi repository.
 ## YAML Processing
 
 - Use `yq` as the primary YAML processor (compatible with project requirements)
-- Validate YAML structure against `test-suite-schema.json` before processing
+- Validate YAML structure against `src/bashi-schema.json` before processing
 - Handle missing or malformed YAML gracefully with clear error messages
 - Support both single-test files and multi-test suites
 - Preserve YAML anchors and aliases during processing
@@ -160,12 +162,6 @@ validate_yaml_file() {
 - Extremely long test descriptions or command outputs
 - Special characters in test names or descriptions
 - Concurrent execution scenarios
-
-### Framework-Specific Rules
-
-- For YAML schema changes, update `test-suite-schema.json` and all example files
-- For CLI changes, update both `src/bashi` and `specs/002-bashi-implementation/contracts/cli-interface.md`
-- For new test features, add examples to `specs/001-yaml-schema/examples/`
 
 ---
 

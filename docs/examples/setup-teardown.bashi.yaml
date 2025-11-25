@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# yaml-language-server: $schema=../../src/bashi-schema.json
 # Setup and Teardown Example
 # Demonstrates: Lifecycle hooks for test environment preparation
 

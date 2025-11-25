@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# yaml-language-server: $schema=../../src/bashi-schema.json
 # Complete Test Suite Example
 # Demonstrates: Real-world test suite with all features
 

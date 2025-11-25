@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../contracts/test-suite-schema.json
+# yaml-language-server: $schema=../../src/bashi-schema.json
 # Variable Substitution Example
 # Demonstrates: User-defined variables and environment variables
 
