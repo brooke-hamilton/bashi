@@ -84,6 +84,10 @@ process_test_suite() {
         # Apply variable substitution to command
         test_command=$(substitute_variables "${test_command}" "${vars_array[@]}")
         
+        # Encode newlines as literal \n for safe transport
+        # shellcheck disable=SC2001
+        test_command=$(echo "${test_command}" | sed ':a;N;$!ba;s/\n/\\n/g')
+        
         # Output processed test info
         echo "TEST:${i}:name=${test_name}"
         echo "TEST:${i}:command=${test_command}"
