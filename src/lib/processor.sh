@@ -55,6 +55,80 @@ substitute_variables() {
     echo "${result}"
 }
 
+# extract_fragments: Extract fragment definitions from YAML file
+# Args: $1 = YAML file path
+# Outputs: Fragment definitions (FRAGMENT:<name>:<property>=<value>)
+extract_fragments() {
+    local yaml_file="$1"
+
+    log_verbose "Extracting fragments from ${yaml_file}"
+
+    # Check if fragments section exists
+    if [ "$(yq eval '.fragments' "${yaml_file}")" = "null" ]; then
+        return 0
+    fi
+
+    # Get all fragment names
+    local fragment_names
+    fragment_names=$(yq eval '.fragments | keys | .[]' "${yaml_file}")
+
+    [ -z "${fragment_names}" ] && return 0
+
+    # Properties that are always scalar values
+    local scalar_props=("exitCode" "timeout" "skip" "outputEquals" "stderr")
+    # Properties that can be string or array
+    local array_props=("outputContains" "outputMatches")
+
+    while IFS= read -r fragment_name; do
+        [ -z "${fragment_name}" ] && continue
+        local frag_path=".fragments.\"${fragment_name}\""
+
+        # Extract scalar properties
+        for prop in "${scalar_props[@]}"; do
+            local prop_val
+            prop_val=$(yq eval "${frag_path}.${prop}" "${yaml_file}")
+            [ "${prop_val}" != "null" ] && echo "FRAGMENT:${fragment_name}:${prop}=${prop_val}"
+        done
+
+        # Extract array-capable properties
+        for prop in "${array_props[@]}"; do
+            local prop_type
+            prop_type=$(yq eval "${frag_path}.${prop} | type" "${yaml_file}")
+
+            if [ "${prop_type}" = "!!seq" ]; then
+                local items
+                items=$(yq eval "${frag_path}.${prop}[]" "${yaml_file}" 2>/dev/null || true)
+                [ -z "${items}" ] && continue
+                while IFS= read -r item; do
+                    [ -n "${item}" ] && echo "FRAGMENT:${fragment_name}:${prop}=${item}"
+                done <<< "${items}"
+            elif [ "${prop_type}" = "!!str" ]; then
+                local item
+                item=$(yq eval "${frag_path}.${prop}" "${yaml_file}")
+                echo "FRAGMENT:${fragment_name}:${prop}=${item}"
+            fi
+        done
+    done <<< "${fragment_names}"
+}
+
+# get_fragment_properties: Get all properties for a specific fragment
+# Args: $1 = fragment name, $2+ = fragment definitions array
+# Outputs: Property lines for the fragment (property=value)
+get_fragment_properties() {
+    local fragment_name="$1"
+    shift
+
+    while [ $# -gt 0 ]; do
+        local frag_def="$1"
+        shift
+
+        # Match FRAGMENT:<name>:<property>=<value>
+        if [[ "${frag_def}" =~ ^FRAGMENT:${fragment_name}:(.+)$ ]]; then
+            echo "${BASH_REMATCH[1]}"
+        fi
+    done
+}
+
 # extract_lifecycle_hooks: Extract lifecycle hook content from YAML file
 # Args: $1 = YAML file path, $2+ = variable definitions for substitution
 # Outputs: LIFECYCLE:* lines for each defined hook
@@ -84,9 +158,10 @@ extract_lifecycle_hooks() {
     done
 }
 
-# process_test_suite: Process YAML file and resolve all variables
+# process_test_suite: Process YAML file and resolve all variables and fragments
 # Args: $1 = YAML file path
 # Outputs: Resolved test definitions (simple format)
+# Fragment properties are output first, then test properties (allowing overrides)
 process_test_suite() {
     local yaml_file="$1"
     
@@ -97,6 +172,14 @@ process_test_suite() {
     while IFS= read -r line; do
         [ -n "${line}" ] && vars_array+=("${line}")
     done < <(extract_variables "${yaml_file}")
+
+    # Extract fragments into an array
+    local fragments_array=()
+    while IFS= read -r line; do
+        [ -n "${line}" ] && fragments_array+=("${line}")
+    done < <(extract_fragments "${yaml_file}")
+
+    log_verbose "Found ${#fragments_array[@]} fragment properties"
     
     # Output lifecycle hooks first
     extract_lifecycle_hooks "${yaml_file}" "${vars_array[@]}"
@@ -123,8 +206,33 @@ process_test_suite() {
         # Output processed test info
         echo "TEST:${i}:name=${test_name}"
         echo "TEST:${i}:command=${test_command}"
+
+        # Check for fragment reference ($ref) and output fragment properties FIRST
+        # This allows test-level properties to override fragment properties
+        local ref_val
+        ref_val=$(yq eval ".tests[${i}].\"\$ref\"" "${yaml_file}")
+        if [ "${ref_val}" != "null" ]; then
+            # Parse fragment name from "#/fragments/<name>"
+            if [[ "${ref_val}" =~ ^#/fragments/(.+)$ ]]; then
+                local fragment_name="${BASH_REMATCH[1]}"
+                log_verbose "Resolving fragment reference: ${fragment_name} for test ${i}"
+
+                # Output all properties from the fragment
+                while IFS= read -r frag_prop; do
+                    [ -z "${frag_prop}" ] && continue
+                    # frag_prop is in format "property=value"
+                    local prop_name="${frag_prop%%=*}"
+                    local prop_value="${frag_prop#*=}"
+                    # Apply variable substitution to fragment values
+                    prop_value=$(substitute_variables "${prop_value}" "${vars_array[@]}")
+                    echo "TEST:${i}:${prop_name}=${prop_value}"
+                done < <(get_fragment_properties "${fragment_name}" "${fragments_array[@]}")
+            else
+                log_verbose "Warning: Invalid fragment reference format: ${ref_val}"
+            fi
+        fi
         
-        # Process optional fields
+        # Process optional fields (these override fragment properties)
         local exit_code
         exit_code=$(yq eval ".tests[${i}].exitCode" "${yaml_file}")
         if [ "${exit_code}" != "null" ]; then

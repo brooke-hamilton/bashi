@@ -30,6 +30,26 @@ Instructions for writing clean, safe, and maintainable shell scripts for bash, s
 - Declare immutable values with `readonly` (or `declare -r`) to prevent accidental reassignment
 - Use `mktemp` to create temporary files or directories safely and ensure they are removed in your cleanup handler
 
+## Code Organization
+
+- **Avoid duplicating similar code blocks** - When handling multiple properties or items with nearly identical logic, use loops over arrays instead of copy-pasting code blocks
+- Extract repeated patterns into reusable functions or loop constructs
+- When accessing the same path or constructing similar strings multiple times, store the common part in a variable (e.g., `local base_path=".items.\"${name}\""`)
+- Avoid redundant intermediate variables that are only used once for simple checks
+
+## Control Flow
+
+- Prefer guard clauses (`[ condition ] && return`) over deeply nested if/else blocks
+- Use early returns to reduce indentation and improve readability
+- Example: `[ -z "${var}" ] && return 0` instead of wrapping the entire function body in `if [ -n "${var}" ]; then ... fi`
+
+## Function Design
+
+- Keep functions focused on a single responsibility
+- If a function exceeds ~40-50 lines, consider whether it can be decomposed
+- If you find yourself copying a block of code within a function, extract it into a helper or use a loop
+- When processing items that have different handling requirements, categorize them upfront (e.g., `scalar_props` vs `array_props`) rather than using inline conditional logic for each item
+
 ## Script Structure
 
 - Start with a clear shebang: `#!/bin/bash` unless specified otherwise
