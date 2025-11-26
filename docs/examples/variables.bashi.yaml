@@ -1,21 +1,49 @@
-# yaml-language-server: $schema=../../src/bashi-schema.json
 # Variable Substitution Example
 # Demonstrates: User-defined variables and environment variables
+# Uses: yq, echo, and standard Unix tools
 
 name: "Variable Substitution Example"
 
 variables:
-  APP_BIN: "./bin/myapp"
-  TEST_FILE: "/tmp/test-data.txt"
-  API_KEY: "{{env.TEST_API_KEY}}"
+  YQ_QUERY: ".name"
+  CONFIG_FILE: "/tmp/bashi-example-config.yaml"
+  USER_HOME: "{{env.HOME}}"
+  SHELL_PATH: "{{env.SHELL}}"
+
+setup: |
+  cat > /tmp/bashi-example-config.yaml << 'EOF'
+  name: example-app
+  version: 1.0.0
+  author: developer
+  EOF
+
+teardown: |
+  rm -f /tmp/bashi-example-config.yaml
 
 tests:
-  - name: "Process file"
-    command: "{{APP_BIN}} process {{TEST_FILE}}"
+  - name: "Use variable in yq query"
+    command: "yq '{{YQ_QUERY}}' {{CONFIG_FILE}}"
+    exitCode: 0
+    outputEquals: "example-app"
+
+  - name: "Access environment variable for home directory"
+    command: "echo \"Home: {{USER_HOME}}\""
     exitCode: 0
     outputContains:
-      - "Processing complete"
-  
-  - name: "Call API"
-    command: "curl -H 'Authorization: {{API_KEY}}' https://api.example.com"
+      - "Home:"
+      - "/"
+
+  - name: "Access shell path from environment"
+    command: "echo \"Shell: {{SHELL_PATH}}\""
     exitCode: 0
+    outputContains:
+      - "Shell:"
+
+  - name: "Combine variables in complex command"
+    command: |
+      echo "Reading {{CONFIG_FILE}}"
+      yq '{{YQ_QUERY}}' {{CONFIG_FILE}}
+    exitCode: 0
+    outputContains:
+      - "Reading"
+      - "example-app"

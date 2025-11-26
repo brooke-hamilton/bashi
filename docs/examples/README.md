@@ -1,53 +1,63 @@
 # Bashi YAML Test Examples
 
-This directory contains example YAML test files demonstrating various features of the Bashi schema.
+This directory contains example YAML test files demonstrating various features of the Bashi schema. All examples use real CLI tools (`yq`, `grep`, and standard Unix utilities) so you can run them on your system.
+
+## Prerequisites
+
+These examples require:
+
+- `yq` - YAML processor (installed as a bashi dependency)
+- Standard Unix tools (`echo`, `grep`, `ls`, `cat`, etc.)
 
 ## Examples
 
-### 1. `basic-test.bashi.yml`
+### 1. `multi-assertion.bashi.yaml`
 
-**Purpose**: Minimal test example  
-**Features**: Simple command, exit code, outputContains  
-**Use case**: Getting started, basic validation
-
-### 2. `multi-assertion.bashi.yml`
-
-**Purpose**: Multiple output assertions  
-**Features**: AND logic, outputEquals, outputMatches, outputContains  
+**Purpose**: Multiple output assertions
+**Features**: AND logic, outputEquals, outputMatches, outputContains
 **Use case**: Comprehensive output validation
+**Tools used**: yq, grep
 
-### 3. `variables.bashi.yml`
+### 2. `variables.bashi.yaml`
 
-**Purpose**: Variable substitution  
-**Features**: User variables `{{VAR}}`, environment variables `{{env.VAR}}`  
+**Purpose**: Variable substitution
+**Features**: User variables `{{VAR}}`, environment variables `{{env.VAR}}`
 **Use case**: Avoiding duplication, external configuration
+**Tools used**: yq, echo
 
-### 4. `setup-teardown.bashi.yml`
+### 3. `setup-teardown.bashi.yaml`
 
-**Purpose**: Test lifecycle management  
-**Features**: setup, teardown, setupEach, teardownEach  
+**Purpose**: Test lifecycle management
+**Features**: setup, teardown, setupEach, teardownEach
 **Use case**: Environment preparation, cleanup, temp files
+**Tools used**: yq, standard file operations
 
-### 5. `fragments.bashi.yml`
+### 4. `fragments.bashi.yaml`
 
-**Purpose**: Reusable test patterns  
-**Features**: Fragment definitions, `$ref` references, field merging  
+**Purpose**: Reusable test patterns
+**Features**: Fragment definitions, `$ref` references, field merging
 **Use case**: DRY principle, common assertions
+**Tools used**: yq
 
-### 6. `complete-suite.bashi.yml`
+### 5. `complete-suite.bashi.yaml`
 
-**Purpose**: Full-featured test suite  
-**Features**: All features combined  
+**Purpose**: Full-featured test suite
+**Features**: All features combined
 **Use case**: Real-world CLI testing
+**Tools used**: yq with comprehensive YAML operations
 
 ## Running Examples
 
 ```bash
-# Once Bashi is implemented:
-bashi examples/basic-test.bashi.yml
-bashi examples/complete-suite.bashi.yml
+# Run individual examples
+bashi docs/examples/multi-assertion.bashi.yaml
+bashi docs/examples/variables.bashi.yaml
+bashi docs/examples/setup-teardown.bashi.yaml
+bashi docs/examples/fragments.bashi.yaml
+bashi docs/examples/complete-suite.bashi.yaml
 
-# For now, these serve as reference for schema implementation
+# Run with verbose output
+bashi docs/examples/complete-suite.bashi.yaml --verbose
 ```
 
 ## Schema Validation
@@ -55,22 +65,24 @@ bashi examples/complete-suite.bashi.yml
 Validate examples against the JSON Schema:
 
 ```bash
-# Using ajv-cli (npm install -g ajv-cli)
-ajv validate -s ../../src/bashi-schema.json -d "*.bashi.yml"
+# Using yq to check YAML syntax
+yq '.' docs/examples/complete-suite.bashi.yaml
+
+# Using ajv-cli for full schema validation (npm install -g ajv-cli)
+ajv validate -s src/bashi-schema.json -d "docs/examples/*.bashi.yaml"
 ```
 
 ## Learning Path
 
-1. Start with `basic-test.bashi.yml` - understand core concepts
-2. Try `multi-assertion.bashi.yml` - learn assertion logic
-3. Explore `variables.bashi.yml` - reduce duplication
-4. Use `setup-teardown.bashi.yml` - manage test environment
-5. Study `fragments.bashi.yml` - apply DRY principle
-6. Review `complete-suite.bashi.yml` - see everything together
+1. Start with `multi-assertion.bashi.yaml` - understand assertion logic
+2. Explore `variables.bashi.yaml` - reduce duplication with variables
+3. Use `setup-teardown.bashi.yaml` - manage test environment lifecycle
+4. Study `fragments.bashi.yaml` - apply DRY principle with reusable fragments
+5. Review `complete-suite.bashi.yaml` - see all features working together
 
 ## Notes
 
-- All examples use `.bashi.yml` extension (recommended)
-- Examples assume a hypothetical `myapp` CLI tool
-- Variable values and URLs are placeholders for demonstration
-- Some examples require test environment setup (temp directories, etc.)
+- All examples use `.bashi.yaml` extension (recommended)
+- Examples use `yq` for YAML processing - a real tool you can experiment with
+- Setup/teardown blocks create temporary directories for isolation
+- Environment variables can be accessed using `{{env.VAR_NAME}}` syntax
