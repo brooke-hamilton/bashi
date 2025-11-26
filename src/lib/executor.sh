@@ -59,6 +59,72 @@ execute_bats_tests() {
     return $?
 }
 
+# execute_bats_tests_batch: Run multiple Bats test files
+# Args: $1 = timeout, $2 = tap output, $3 = timing, $4 = trace, $5 = parallel jobs, $6+ = bats files
+# Returns: Bats exit code
+execute_bats_tests_batch() {
+    local timeout="${1:-300}"
+    local tap_output="${2:-false}"
+    # timing is accepted for API compatibility but handled in test generation, not execution
+    local timing="${3:-false}"
+    # trace is accepted for API compatibility but handled in test generation, not execution
+    # shellcheck disable=SC2034
+    local trace="${4:-false}"
+    local parallel_jobs="${5:-1}"
+    shift 5
+    
+    local bats_files=("$@")
+    
+    if [ ${#bats_files[@]} -eq 0 ]; then
+        log_error "No Bats files provided to execute"
+        return 1
+    fi
+    
+    # Verify all files exist
+    local bats_file
+    for bats_file in "${bats_files[@]}"; do
+        check_file_exists "${bats_file}" || return 1
+    done
+    
+    log_verbose "Executing ${#bats_files[@]} Bats test file(s) (timeout: ${timeout}s, parallel: ${parallel_jobs})"
+    
+    # Build bats command with optional flags
+    local bats_cmd=("bats")
+    if [ "${tap_output}" = true ]; then
+        bats_cmd+=("--tap")
+    fi
+    if [ "${timing}" = true ]; then
+        bats_cmd+=("--timing")
+    fi
+    if [ "${parallel_jobs}" -gt 1 ]; then
+        # Check for parallel binary (required by Bats for --jobs)
+        if ! command -v parallel >/dev/null 2>&1 && ! command -v rush >/dev/null 2>&1; then
+            log_error "Parallel execution requires GNU parallel or shenwei356/rush to be installed"
+            log_error "Install with: apt-get install parallel (Debian/Ubuntu) or brew install parallel (macOS)"
+            return 2
+        fi
+        bats_cmd+=("--jobs" "${parallel_jobs}")
+    fi
+    
+    # Add all bats files to command
+    bats_cmd+=("${bats_files[@]}")
+    
+    # Check if timeout command is available
+    if command -v timeout >/dev/null 2>&1; then
+        # GNU timeout
+        timeout "${timeout}s" "${bats_cmd[@]}"
+    elif command -v gtimeout >/dev/null 2>&1; then
+        # GNU timeout on macOS (installed via coreutils)
+        gtimeout "${timeout}s" "${bats_cmd[@]}"
+    else
+        # No timeout available - run without timeout
+        log_verbose "Warning: timeout command not available, running without timeout"
+        "${bats_cmd[@]}"
+    fi
+    
+    return $?
+}
+
 # parse_tap_output: Parse TAP output for summary statistics
 # Args: stdin = TAP output
 # Outputs: Summary statistics

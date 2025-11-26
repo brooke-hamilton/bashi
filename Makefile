@@ -36,14 +36,7 @@ ifdef FILE
 	@echo "Running test: $(FILE)"
 	@./src/bashi $(OPTS) "$(FILE)"
 else
-	@for test_file in ./tests/*.bashi.yaml; do \
-		echo "Running test: $$test_file"; \
-		./src/bashi $(OPTS) "$$test_file"; \
-	done
-	@for test_file in ./docs/examples/*.bashi.yaml; do \
-		echo "Running test: $$test_file"; \
-		./src/bashi $(OPTS) "$$test_file"; \
-	done
+	@./src/bashi $(OPTS) 'tests/**/*.bashi.yaml' 'docs/**/*.bashi.yaml'
 endif
 
 .PHONY: lint

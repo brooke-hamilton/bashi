@@ -81,7 +81,8 @@ bashi my-tests.bashi.yaml
 ## Usage
 
 ```bash
-bashi [OPTIONS] <test-suite.bashi.yaml>
+bashi [OPTIONS] <test-suite.bashi.yaml>...
+bashi [OPTIONS] <glob-pattern>...
 
 OPTIONS:
     -h, --help              Show this help message
@@ -95,14 +96,20 @@ OPTIONS:
     -j, --parallel [N]      Run tests in parallel with N jobs (default: CPU count)
     --no-color              Disable colored output (useful for testing)
 
+GLOB PATTERNS:
+    **/*.bashi.yaml         Match all .bashi.yaml files recursively
+    tests/*.bashi.yaml      Match .bashi.yaml files in tests/ directory
+
 EXAMPLES:
     bashi tests/my-suite.bashi.yaml
+    bashi 'tests/**/*.bashi.yaml'
+    bashi -j 4 'tests/**/*.bashi.yaml' 'docs/**/*.bashi.yaml'
     bashi --validate-only tests/my-suite.bashi.yaml
     bashi --verbose --timeout 60 tests/my-suite.bashi.yaml
     bashi --tap --timing tests/my-suite.bashi.yaml
     bashi --trace --verbose tests/my-suite.bashi.yaml
     bashi --timing --no-color tests/my-suite.bashi.yaml
-    bashi --parallel tests/my-suite.bashi.yaml
+    bashi --parallel 'tests/**/*.bashi.yaml'
     bashi -j 4 tests/my-suite.bashi.yaml
 ```
 
@@ -113,6 +120,7 @@ EXAMPLES:
 - `name` (required) - Human-readable identifier for the test suite
 - `description` (optional) - Explanation of what this suite validates
 - `variables` (optional) - Key-value pairs for variable substitution
+- `parallel` (optional) - Whether this suite can run in parallel (default: true)
 - `setupFile` (optional) - Commands to run once before all tests
 - `teardownFile` (optional) - Commands to run once after all tests
 - `setup` (optional) - Commands to run before each individual test
@@ -198,7 +206,12 @@ bashi --parallel tests/my-suite.bashi.yaml
 
 # Run with specific number of parallel jobs
 bashi -j 4 tests/my-suite.bashi.yaml
+
+# Run multiple test suite files in parallel using glob patterns
+bashi -j 4 'tests/**/*.bashi.yaml' 'docs/**/*.bashi.yaml'
 ```
+
+**Note:** Glob patterns must be quoted to prevent shell expansion. Bashi uses `find` internally to expand patterns like `**/*.bashi.yaml`, which works regardless of your shell's `globstar` setting.
 
 **Prerequisites:** Parallel execution requires [GNU parallel](https://www.gnu.org/software/parallel/) or [shenwei356/rush](https://github.com/shenwei356/rush):
 
