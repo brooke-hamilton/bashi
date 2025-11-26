@@ -7,7 +7,8 @@ set -euo pipefail
 # Assumes utils.sh has already been sourced
 
 # execute_bats_tests: Run Bats test file
-# Args: $1 = bats file path, $2 = timeout (optional, default 300), $3 = tap output (optional, default false), $4 = timing (optional, default false), $5 = trace (optional, default false)
+# Args: $1 = bats file path, $2 = timeout (optional, default 300), $3 = tap output (optional, default false),
+#       $4 = timing (optional, default false), $5 = trace (optional, default false), $6 = parallel jobs (optional, default 1)
 # Returns: Bats exit code
 execute_bats_tests() {
     local bats_file="$1"
@@ -17,12 +18,13 @@ execute_bats_tests() {
     # trace is accepted for API compatibility but handled in test generation, not execution
     # shellcheck disable=SC2034
     local trace="${5:-false}"
+    local parallel_jobs="${6:-1}"
     
     check_file_exists "${bats_file}" || return 1
     
-    log_verbose "Executing Bats tests: ${bats_file} (timeout: ${timeout}s)"
+    log_verbose "Executing Bats tests: ${bats_file} (timeout: ${timeout}s, parallel: ${parallel_jobs})"
     
-    # Build bats command with optional --tap and --timing flags
+    # Build bats command with optional flags
     # Note: trace is handled in test generation, not passed to bats
     local bats_cmd=("bats")
     if [ "${tap_output}" = true ]; then
@@ -30,6 +32,15 @@ execute_bats_tests() {
     fi
     if [ "${timing}" = true ]; then
         bats_cmd+=("--timing")
+    fi
+    if [ "${parallel_jobs}" -gt 1 ]; then
+        # Check for parallel binary (required by Bats for --jobs)
+        if ! command -v parallel >/dev/null 2>&1 && ! command -v rush >/dev/null 2>&1; then
+            log_error "Parallel execution requires GNU parallel or shenwei356/rush to be installed"
+            log_error "Install with: apt-get install parallel (Debian/Ubuntu) or brew install parallel (macOS)"
+            return 2
+        fi
+        bats_cmd+=("--jobs" "${parallel_jobs}")
     fi
     
     # Check if timeout command is available

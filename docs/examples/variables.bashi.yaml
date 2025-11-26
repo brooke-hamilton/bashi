@@ -6,31 +6,27 @@ name: "Variable Substitution Example"
 
 variables:
   YQ_QUERY: ".name"
-  CONFIG_FILE: "/tmp/bashi-example-config.yaml"
   APP_NAME: "example-app"
   APP_VERSION: "1.0.0"
 
 setup: |
-  echo "name: example-app" > /tmp/bashi-example-config.yaml
-  echo "version: 1.0.0" >> /tmp/bashi-example-config.yaml
-  echo "author: developer" >> /tmp/bashi-example-config.yaml
-
-teardown: |
-  rm -f /tmp/bashi-example-config.yaml
+  echo "name: example-app" > "$TEST_TEMP_DIR/config.yaml"
+  echo "version: 1.0.0" >> "$TEST_TEMP_DIR/config.yaml"
+  echo "author: developer" >> "$TEST_TEMP_DIR/config.yaml"
 
 tests:
   - name: "Use variable in yq query"
-    command: "yq '{{YQ_QUERY}}' {{CONFIG_FILE}}"
+    command: "yq '{{YQ_QUERY}}' \"$TEST_TEMP_DIR/config.yaml\""
     exitCode: 0
     outputEquals: "{{APP_NAME}}"
 
   - name: "Use variable in assertion"
-    command: "yq '.version' {{CONFIG_FILE}}"
+    command: "yq '.version' \"$TEST_TEMP_DIR/config.yaml\""
     exitCode: 0
     outputEquals: "{{APP_VERSION}}"
 
   - name: "Variables in outputContains"
-    command: "yq '.' {{CONFIG_FILE}}"
+    command: "yq '.' \"$TEST_TEMP_DIR/config.yaml\""
     exitCode: 0
     outputContains:
       - "{{APP_NAME}}"
@@ -38,8 +34,8 @@ tests:
 
   - name: "Combine variables in complex command"
     command: |
-      echo "Reading {{CONFIG_FILE}}"
-      yq '{{YQ_QUERY}}' {{CONFIG_FILE}}
+      echo "Reading config from $TEST_TEMP_DIR"
+      yq '{{YQ_QUERY}}' "$TEST_TEMP_DIR/config.yaml"
     exitCode: 0
     outputContains:
       - "Reading"

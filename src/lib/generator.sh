@@ -66,7 +66,7 @@ EOF
         echo ""
     fi
 
-    # Generate setup() - user content first, then Bashi defaults
+    # Generate setup() - Bashi defaults first, then user content
     echo "setup() {"
     if [ "${trace_mode}" = true ]; then
         cat <<'EOF'
@@ -75,16 +75,16 @@ echo "" >&3
 echo "# Running setup..." >&3
 EOF
     fi
-    if [ -n "${setup_content}" ]; then
-        echo "# User-defined setup"
-        echo "${setup_content}"
-        echo ""
-    fi
     cat <<'EOF'
 # Bashi default: create per-test temp directory
 export TEST_TEMP_DIR="${BATS_TEST_TMPDIR}/bashi-${BATS_TEST_NUMBER}"
 mkdir -p "$TEST_TEMP_DIR"
 EOF
+    if [ -n "${setup_content}" ]; then
+        echo ""
+        echo "# User-defined setup"
+        echo "${setup_content}"
+    fi
     if [ "${trace_mode}" = true ]; then
         cat <<'EOF'
 echo "# setup complete" >&3
