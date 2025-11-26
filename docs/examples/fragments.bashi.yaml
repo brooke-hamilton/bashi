@@ -1,23 +1,51 @@
 # Reusable Fragments Example
 # Demonstrates: DRY principle with test fragments
+# Uses: yq and standard Unix tools
 
-name: "Reusable HTTP Fragments"
+name: "Reusable YAML Processing Fragments"
 
 fragments:
-  http-success:
+  yaml-success:
     exitCode: 0
-    timeout: 30
+    timeout: 10
+
+  valid-yaml-output:
+    exitCode: 0
     outputContains:
-      - "HTTP/1.1"
-      - "200 OK"
+      - ":"
+
+setupFile: |
+  export TEST_DIR=$(mktemp -d)
+  cat <<EOF > "$TEST_DIR/app.yaml"
+  name: webapp
+  version: 1.0.0
+  status: running
+  EOF
+  cat <<EOF > "$TEST_DIR/service.yaml"
+  name: api-service
+  version: 2.3.1
+  status: healthy
+  EOF
+
+teardownFile: |
+  rm -rf "$TEST_DIR"
 
 tests:
-  - name: "GET homepage"
-    command: "curl https://example.com"
-    $ref: "#/fragments/http-success"
-    
-  - name: "GET API endpoint"
-    command: "curl https://api.example.com/health"
-    $ref: "#/fragments/http-success"
-    outputContains:  # Adds to fragment's checks
-      - '"status":"healthy"'
+  - name: "Read app config"
+    command: "yq '.' \"$TEST_DIR/app.yaml\""
+    $ref: "#/fragments/yaml-success"
+
+  - name: "Read service config"
+    command: "yq '.' \"$TEST_DIR/service.yaml\""
+    $ref: "#/fragments/yaml-success"
+
+  - name: "Extract app name"
+    command: "yq '.name' \"$TEST_DIR/app.yaml\""
+    $ref: "#/fragments/yaml-success"
+    outputEquals: "webapp"
+
+  - name: "Extract service status"
+    command: "yq '.status' \"$TEST_DIR/service.yaml\""
+    $ref: "#/fragments/yaml-success"
+    outputEquals: "healthy"
+

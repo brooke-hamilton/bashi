@@ -55,6 +55,35 @@ substitute_variables() {
     echo "${result}"
 }
 
+# extract_lifecycle_hooks: Extract lifecycle hook content from YAML file
+# Args: $1 = YAML file path, $2+ = variable definitions for substitution
+# Outputs: LIFECYCLE:* lines for each defined hook
+extract_lifecycle_hooks() {
+    local yaml_file="$1"
+    shift
+    local vars_array=("$@")
+    
+    local hooks=("setupFile" "teardownFile" "setup" "teardown")
+    
+    for hook in "${hooks[@]}"; do
+        local hook_content
+        hook_content=$(yq eval ".${hook}" "${yaml_file}")
+        
+        if [ "${hook_content}" != "null" ]; then
+            # Apply variable substitution
+            if [ ${#vars_array[@]} -gt 0 ]; then
+                hook_content=$(substitute_variables "${hook_content}" "${vars_array[@]}")
+            fi
+            
+            # Encode newlines as literal \n for safe transport
+            # shellcheck disable=SC2001
+            hook_content=$(echo "${hook_content}" | sed ':a;N;$!ba;s/\n/\\n/g')
+            
+            echo "LIFECYCLE:${hook}=${hook_content}"
+        fi
+    done
+}
+
 # process_test_suite: Process YAML file and resolve all variables
 # Args: $1 = YAML file path
 # Outputs: Resolved test definitions (simple format)
@@ -68,6 +97,9 @@ process_test_suite() {
     while IFS= read -r line; do
         [ -n "${line}" ] && vars_array+=("${line}")
     done < <(extract_variables "${yaml_file}")
+    
+    # Output lifecycle hooks first
+    extract_lifecycle_hooks "${yaml_file}" "${vars_array[@]}"
     
     # Get test count
     local test_count

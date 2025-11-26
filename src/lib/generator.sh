@@ -6,30 +6,120 @@ set -euo pipefail
 
 # Assumes utils.sh has already been sourced
 
-# generate_bats_header: Create Bats file header
-# Args: $1 = suite name
+# generate_bats_header: Create Bats file header with lifecycle hooks
+# Args: $1 = suite name, $2 = setupFile content, $3 = teardownFile content,
+#       $4 = setup content, $5 = teardown content, $6 = trace mode
 generate_bats_header() {
     local suite_name="$1"
+    local setup_file_content="${2:-}"
+    local teardown_file_content="${3:-}"
+    local setup_content="${4:-}"
+    local teardown_content="${5:-}"
+    local trace_mode="${6:-false}"
     
     cat <<EOF
 #!/usr/bin/env bats
 # Auto-generated from Bashi test suite: ${suite_name}
 # Generated at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
-setup() {
-    # Test-specific setup will be added here
-    export TEST_TEMP_DIR="\${BATS_TEST_TMPDIR}/bashi-\${BATS_TEST_NUMBER}"
-    mkdir -p "\$TEST_TEMP_DIR"
-}
-
-teardown() {
-    # Test-specific teardown will be added here
-    if [ -d "\${TEST_TEMP_DIR}" ]; then
-        rm -rf "\${TEST_TEMP_DIR}"
-    fi
-}
-
 EOF
+
+    # Generate setup_file() if user provided content
+    if [ -n "${setup_file_content}" ]; then
+        echo "setup_file() {"
+        if [ "${trace_mode}" = true ]; then
+            cat <<'EOF'
+# Trace output
+echo "" >&3
+echo "# Running setup_file..." >&3
+EOF
+        fi
+        echo "# User-defined setup_file"
+        echo "${setup_file_content}"
+        if [ "${trace_mode}" = true ]; then
+            cat <<'EOF'
+echo "# setup_file complete" >&3
+EOF
+        fi
+        echo "}"
+        echo ""
+    fi
+
+    # Generate teardown_file() if user provided content
+    if [ -n "${teardown_file_content}" ]; then
+        echo "teardown_file() {"
+        if [ "${trace_mode}" = true ]; then
+            cat <<'EOF'
+# Trace output
+echo "" >&3
+echo "# Running teardown_file..." >&3
+EOF
+        fi
+        echo "# User-defined teardown_file"
+        echo "${teardown_file_content}"
+        if [ "${trace_mode}" = true ]; then
+            cat <<'EOF'
+echo "# teardown_file complete" >&3
+EOF
+        fi
+        echo "}"
+        echo ""
+    fi
+
+    # Generate setup() - user content first, then Bashi defaults
+    echo "setup() {"
+    if [ "${trace_mode}" = true ]; then
+        cat <<'EOF'
+# Trace output
+echo "" >&3
+echo "# Running setup..." >&3
+EOF
+    fi
+    if [ -n "${setup_content}" ]; then
+        echo "# User-defined setup"
+        echo "${setup_content}"
+        echo ""
+    fi
+    cat <<'EOF'
+# Bashi default: create per-test temp directory
+export TEST_TEMP_DIR="${BATS_TEST_TMPDIR}/bashi-${BATS_TEST_NUMBER}"
+mkdir -p "$TEST_TEMP_DIR"
+EOF
+    if [ "${trace_mode}" = true ]; then
+        cat <<'EOF'
+echo "# setup complete" >&3
+EOF
+    fi
+    echo "}"
+    echo ""
+
+    # Generate teardown() - Bashi defaults first, then user content
+    echo "teardown() {"
+    if [ "${trace_mode}" = true ]; then
+        cat <<'EOF'
+# Trace output
+echo "" >&3
+echo "# Running teardown..." >&3
+EOF
+    fi
+    cat <<'EOF'
+# Bashi default: cleanup per-test temp directory
+if [ -d "${TEST_TEMP_DIR}" ]; then
+rm -rf "${TEST_TEMP_DIR}"
+fi
+EOF
+    if [ -n "${teardown_content}" ]; then
+        echo ""
+        echo "# User-defined teardown"
+        echo "${teardown_content}"
+    fi
+    if [ "${trace_mode}" = true ]; then
+        cat <<'EOF'
+echo "# teardown complete" >&3
+EOF
+    fi
+    echo "}"
+    echo ""
 }
 
 # generate_bats_test: Generate a single Bats test
@@ -47,9 +137,14 @@ generate_bats_test() {
 @test "${test_name}" {
 EOF
 
-    # Add skip if enabled
-    if [ "${skip_test}" = "true" ]; then
-        echo "    skip"
+    # Add skip if enabled (can be "true" or a reason string)
+    if [ "${skip_test}" != "false" ] && [ -n "${skip_test}" ]; then
+        if [ "${skip_test}" = "true" ]; then
+            echo "    skip"
+        else
+            # skip_test contains the reason string
+            echo "    skip \"${skip_test}\""
+        fi
         echo "}"
         echo ""
         return
@@ -127,6 +222,12 @@ generate_bats_file() {
     
     log_verbose "Generating Bats file: ${output_file}"
     
+    # Lifecycle hook content
+    local lifecycle_setup_file=""
+    local lifecycle_teardown_file=""
+    local lifecycle_setup=""
+    local lifecycle_teardown=""
+    
     # Read all processed test data and organize by test
     local current_test_name=""
     local current_test_command=""
@@ -134,10 +235,37 @@ generate_bats_file() {
     local current_skip="false"
     local current_assertions=()
     
-    {
-        generate_bats_header "${suite_name}"
+    # First pass: collect all lines and extract lifecycle hooks
+    local all_lines=()
+    while IFS= read -r line; do
+        all_lines+=("${line}")
         
-        while IFS= read -r line; do
+        # Extract lifecycle hooks
+        if [[ "${line}" =~ ^LIFECYCLE:setupFile=(.+)$ ]]; then
+            lifecycle_setup_file="${BASH_REMATCH[1]}"
+            # Decode literal \n back to actual newlines
+            # shellcheck disable=SC2001
+            lifecycle_setup_file=$(echo "${lifecycle_setup_file}" | sed 's/\\n/\n/g')
+        elif [[ "${line}" =~ ^LIFECYCLE:teardownFile=(.+)$ ]]; then
+            lifecycle_teardown_file="${BASH_REMATCH[1]}"
+            # shellcheck disable=SC2001
+            lifecycle_teardown_file=$(echo "${lifecycle_teardown_file}" | sed 's/\\n/\n/g')
+        elif [[ "${line}" =~ ^LIFECYCLE:setup=(.+)$ ]]; then
+            lifecycle_setup="${BASH_REMATCH[1]}"
+            # shellcheck disable=SC2001
+            lifecycle_setup=$(echo "${lifecycle_setup}" | sed 's/\\n/\n/g')
+        elif [[ "${line}" =~ ^LIFECYCLE:teardown=(.+)$ ]]; then
+            lifecycle_teardown="${BASH_REMATCH[1]}"
+            # shellcheck disable=SC2001
+            lifecycle_teardown=$(echo "${lifecycle_teardown}" | sed 's/\\n/\n/g')
+        fi
+    done
+    
+    {
+        generate_bats_header "${suite_name}" "${lifecycle_setup_file}" "${lifecycle_teardown_file}" "${lifecycle_setup}" "${lifecycle_teardown}" "${trace_mode}"
+        
+        # Second pass: process test definitions
+        for line in "${all_lines[@]}"; do
             if [[ "${line}" =~ ^TEST:([0-9]+):name=(.+)$ ]]; then
                 # New test starting - output previous test if exists
                 if [ -n "${current_test_name}" ]; then

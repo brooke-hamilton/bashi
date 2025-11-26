@@ -1,30 +1,50 @@
-# yaml-language-server: $schema=../../src/bashi-schema.json
 # Setup and Teardown Example
 # Demonstrates: Lifecycle hooks for test environment preparation
+# Uses: yq, standard Unix file operations
+#
+# Lifecycle Hooks:
+#   - setupFile:    Runs once before all tests (use for suite-wide setup)
+#   - teardownFile: Runs once after all tests (use for suite-wide cleanup)
+#   - setup:        Runs before each individual test
+#   - teardown:     Runs after each individual test
+#
+# Tips:
+#   - Variables exported in setupFile are available to all tests
+#   - Use echo "message" >&3 to display output during test execution
 
 name: "Setup and Teardown Example"
 
+setupFile: |
+  export TEST_DIR=$(mktemp -d)
+  echo "Test environment: $TEST_DIR" >&3
+
+teardownFile: |
+  rm -rf "$TEST_DIR"
+  echo "Cleanup complete" >&3
+
 setup: |
-  export TMPDIR=$(mktemp -d)
-  echo "Test environment: $TMPDIR"
+  cd "$TEST_DIR"
+  cat <<EOF > config.yaml
+  app: testapp
+  env: testing
+  EOF
 
 teardown: |
-  rm -rf "$TMPDIR"
-  echo "Cleanup complete"
-
-setupEach: |
-  cd "$TMPDIR"
-  touch test-file.txt
-
-teardownEach: |
-  rm -f test-file.txt
+  rm -f config.yaml
 
 tests:
-  - name: "File exists in temp dir"
-    command: "ls test-file.txt"
+  - name: "Config file exists in temp dir"
+    command: "ls \"$TEST_DIR/config.yaml\""
     exitCode: 0
-    
-  - name: "Can write to temp file"
-    command: "echo 'data' > test-file.txt && cat test-file.txt"
+
+  - name: "Can read YAML config with yq"
+    command: "yq '.app' \"$TEST_DIR/config.yaml\""
     exitCode: 0
-    outputEquals: "data"
+    outputEquals: "testapp"
+
+  - name: "Can modify and verify YAML"
+    command: |
+      yq -i '.env = "production"' "$TEST_DIR/config.yaml"
+      yq '.env' "$TEST_DIR/config.yaml"
+    exitCode: 0
+    outputEquals: "production"

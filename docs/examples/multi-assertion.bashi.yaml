@@ -1,21 +1,46 @@
 # Multiple Assertions Example
 # Demonstrates: AND logic - all assertions must pass
+# Uses: yq, grep, and standard Unix tools
 
 name: "Multi-Assertion Example"
 
+setupFile: |
+  export TEST_DIR=$(mktemp -d)
+  echo "status: OK" > "$TEST_DIR/data.yaml"
+  echo "message: All systems operational" >> "$TEST_DIR/data.yaml"
+  echo "timestamp: 2024-01-15T10:30:00Z" >> "$TEST_DIR/data.yaml"
+
+teardownFile: |
+  rm -rf "$TEST_DIR"
+
 tests:
-  - name: "Version command format"
-    command: "myapp --version"
+  - name: "yq version command format"
+    command: "yq --version"
     exitCode: 0
-    outputMatches: "^myapp version [0-9]+\\.[0-9]+\\.[0-9]+$"
+    outputMatches: "[0-9]+\\.[0-9]+\\.[0-9]+"
     outputContains:
       - "version"
-  
+
   - name: "All assertions must pass (AND logic)"
-    command: "myapp status"
+    command: "yq '.status' \"$TEST_DIR/data.yaml\""
     exitCode: 0
-    outputEquals: "Status: OK"
-    outputMatches: "^Status:.*$"
+    outputEquals: "OK"
+    outputMatches: "^OK$"
     outputContains:
-      - "Status"
       - "OK"
+
+  - name: "Multiple output checks on YAML extraction"
+    command: "yq '.message' \"$TEST_DIR/data.yaml\""
+    exitCode: 0
+    outputContains:
+      - "systems"
+      - "operational"
+    outputMatches: "All.*operational"
+
+  - name: "Grep with multiple pattern matches"
+    command: "echo -e 'apple\\nbanana\\ncherry' | grep -E 'a|e'"
+    exitCode: 0
+    outputContains:
+      - "apple"
+      - "banana"
+      - "cherry"
