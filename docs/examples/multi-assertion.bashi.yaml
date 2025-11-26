@@ -1,6 +1,7 @@
-# yaml-language-server: $schema=../../src/bashi-schema.json
 # Multiple Assertions Example
 # Demonstrates: AND logic - all assertions must pass
+
+name: "Multi-Assertion Example"
 
 tests:
   - name: "Version command format"

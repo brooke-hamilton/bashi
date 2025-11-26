@@ -4,7 +4,7 @@
   "title": "Bashi Test Suite",
   "description": "YAML schema for Bashi CLI test definitions",
   "type": "object",
-  "required": ["tests"],
+  "required": ["name", "tests"],
   "properties": {
     "name": {
       "type": "string",

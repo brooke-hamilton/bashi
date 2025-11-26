@@ -2,6 +2,8 @@
 # Setup and Teardown Example
 # Demonstrates: Lifecycle hooks for test environment preparation
 
+name: "Setup and Teardown Example"
+
 setup: |
   export TMPDIR=$(mktemp -d)
   echo "Test environment: $TMPDIR"
