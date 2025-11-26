@@ -1,20 +1,30 @@
 # Setup and Teardown Example
 # Demonstrates: Lifecycle hooks for test environment preparation
 # Uses: yq, standard Unix file operations
+#
+# Lifecycle Hooks:
+#   - setupFile:    Runs once before all tests (use for suite-wide setup)
+#   - teardownFile: Runs once after all tests (use for suite-wide cleanup)
+#   - setup:        Runs before each individual test
+#   - teardown:     Runs after each individual test
+#
+# Tips:
+#   - Variables exported in setupFile are available to all tests
+#   - Use echo "message" >&3 to display output during test execution
 
 name: "Setup and Teardown Example"
 
 setupFile: |
   export TEST_DIR=$(mktemp -d)
-  echo "Test environment: $TEST_DIR"
+  echo "Test environment: $TEST_DIR" >&3
 
 teardownFile: |
   rm -rf "$TEST_DIR"
-  echo "Cleanup complete"
+  echo "Cleanup complete" >&3
 
 setup: |
   cd "$TEST_DIR"
-  cat > config.yaml << 'EOF'
+  cat <<EOF > config.yaml
   app: testapp
   env: testing
   EOF

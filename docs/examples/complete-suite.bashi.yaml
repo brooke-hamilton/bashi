@@ -21,7 +21,7 @@ fragments:
 
 setupFile: |
   export TEST_DIR=$(mktemp -d)
-  cat > "$TEST_DIR/config.yaml" << 'EOF'
+  cat <<EOF > "$TEST_DIR/config.yaml"
   name: myapp
   version: 2.1.0
   database:

@@ -16,12 +16,12 @@ fragments:
 
 setupFile: |
   export TEST_DIR=$(mktemp -d)
-  cat > "$TEST_DIR/app.yaml" << 'EOF'
+  cat <<EOF > "$TEST_DIR/app.yaml"
   name: webapp
   version: 1.0.0
   status: running
   EOF
-  cat > "$TEST_DIR/service.yaml" << 'EOF'
+  cat <<EOF > "$TEST_DIR/service.yaml"
   name: api-service
   version: 2.3.1
   status: healthy
@@ -48,3 +48,4 @@ tests:
     command: "yq '.status' \"$TEST_DIR/service.yaml\""
     $ref: "#/fragments/yaml-success"
     outputEquals: "healthy"
+

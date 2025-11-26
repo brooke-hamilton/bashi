@@ -110,6 +110,10 @@ EXAMPLES:
 - `name` (required) - Human-readable identifier for the test suite
 - `description` (optional) - Explanation of what this suite validates
 - `variables` (optional) - Key-value pairs for variable substitution
+- `setupFile` (optional) - Commands to run once before all tests
+- `teardownFile` (optional) - Commands to run once after all tests
+- `setup` (optional) - Commands to run before each individual test
+- `teardown` (optional) - Commands to run after each individual test
 - `tests` (required) - Array of test definitions
 
 ### Test Definition Fields
@@ -140,6 +144,46 @@ tests:
     outputContains:
       - '"status":"ok"'
 ```
+
+### Lifecycle Hooks
+
+Bashi supports four lifecycle hooks that map directly to Bats-core functions:
+
+| Hook | Runs | Use Case |
+|------|------|----------|
+| `setupFile` | Once before all tests | Create temp directories, start services |
+| `teardownFile` | Once after all tests | Cleanup temp files, stop services |
+| `setup` | Before each test | Reset test state, create test files |
+| `teardown` | After each test | Clean up test artifacts |
+
+```yaml
+name: "Suite with Lifecycle Hooks"
+
+setupFile: |
+  export TEST_DIR=$(mktemp -d)
+  echo "Created test directory: $TEST_DIR" >&3
+
+teardownFile: |
+  rm -rf "$TEST_DIR"
+
+setup: |
+  cd "$TEST_DIR"
+  echo "initial data" > testfile.txt
+
+teardown: |
+  rm -f testfile.txt
+
+tests:
+  - name: "File exists after setup"
+    command: cat "$TEST_DIR/testfile.txt"
+    exitCode: 0
+    outputEquals: "initial data"
+```
+
+**Tips:**
+
+- Variables exported in `setupFile` are available to all tests
+- Use `echo "message" >&3` to display output during test execution
 
 ## Examples
 

@@ -1,0 +1,64 @@
+# Lifecycle Hooks Test Suite
+# Tests: setupFile, teardownFile, setup, teardown functionality
+
+name: "Lifecycle Hooks Test Suite"
+
+variables:
+  markerPrefix: "bashi_lifecycle_test"
+
+setupFile: |
+  # Create a suite-wide marker file to verify setupFile runs once
+  export SUITE_MARKER_FILE="${BATS_SUITE_TMPDIR}/{{markerPrefix}}_suite_marker"
+  echo "0" > "$SUITE_MARKER_FILE"
+  
+  # Create a counter file to track setup calls
+  export SETUP_COUNTER_FILE="${BATS_SUITE_TMPDIR}/{{markerPrefix}}_setup_counter"
+  echo "0" > "$SETUP_COUNTER_FILE"
+
+teardownFile: |
+  # Verify the marker file exists (proves setupFile ran)
+  if [ ! -f "$SUITE_MARKER_FILE" ]; then
+    echo "ERROR: Suite marker file not found" >&2
+    exit 1
+  fi
+
+setup: |
+  # Increment the setup counter each time setup runs
+  if [ -f "$SETUP_COUNTER_FILE" ]; then
+    count=$(cat "$SETUP_COUNTER_FILE")
+    echo "$((count + 1))" > "$SETUP_COUNTER_FILE"
+  fi
+  
+  # Create a per-test marker file
+  export TEST_MARKER="${BATS_TEST_TMPDIR}/test_marker_${BATS_TEST_NUMBER}"
+  echo "setup_ran" > "$TEST_MARKER"
+
+teardown: |
+  # Verify the per-test marker exists
+  if [ -f "$TEST_MARKER" ]; then
+    rm -f "$TEST_MARKER"
+  fi
+
+tests:
+  - name: "setupFile creates suite marker file"
+    command: "test -f \"$SUITE_MARKER_FILE\""
+    exitCode: 0
+
+  - name: "setup creates per-test marker"
+    command: "cat \"$TEST_MARKER\""
+    exitCode: 0
+    outputEquals: "setup_ran"
+
+  - name: "setup runs before each test (counter increments)"
+    command: "cat \"$SETUP_COUNTER_FILE\""
+    exitCode: 0
+    # By test 3, setup should have run 3 times
+    outputEquals: "3"
+
+  - name: "Bashi default TEST_TEMP_DIR is still created"
+    command: "test -d \"$TEST_TEMP_DIR\""
+    exitCode: 0
+
+  - name: "Variables work in lifecycle hooks"
+    command: "echo \"$SUITE_MARKER_FILE\" | grep '{{markerPrefix}}'"
+    exitCode: 0

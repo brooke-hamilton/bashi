@@ -34,3 +34,12 @@ tests:
     outputContains:
       - "line1"
       - "line 2"
+
+  - name: "Heredoc in command test"
+    command: |
+      cat <<EOF | yq '.name'
+      name: testvalue
+      version: 1.0
+      EOF
+    exitCode: 0
+    outputEquals: "testvalue"

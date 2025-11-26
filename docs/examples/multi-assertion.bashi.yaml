@@ -6,11 +6,9 @@ name: "Multi-Assertion Example"
 
 setupFile: |
   export TEST_DIR=$(mktemp -d)
-  cat > "$TEST_DIR/data.yaml" << 'EOF'
-  status: OK
-  message: All systems operational
-  timestamp: 2024-01-15T10:30:00Z
-  EOF
+  echo "status: OK" > "$TEST_DIR/data.yaml"
+  echo "message: All systems operational" >> "$TEST_DIR/data.yaml"
+  echo "timestamp: 2024-01-15T10:30:00Z" >> "$TEST_DIR/data.yaml"
 
 teardownFile: |
   rm -rf "$TEST_DIR"

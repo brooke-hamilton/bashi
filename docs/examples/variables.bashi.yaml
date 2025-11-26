@@ -1,5 +1,5 @@
 # Variable Substitution Example
-# Demonstrates: User-defined variables and environment variables
+# Demonstrates: User-defined variables for reusable test values
 # Uses: yq, echo, and standard Unix tools
 
 name: "Variable Substitution Example"
@@ -7,15 +7,13 @@ name: "Variable Substitution Example"
 variables:
   YQ_QUERY: ".name"
   CONFIG_FILE: "/tmp/bashi-example-config.yaml"
-  USER_HOME: "{{env.HOME}}"
-  SHELL_PATH: "{{env.SHELL}}"
+  APP_NAME: "example-app"
+  APP_VERSION: "1.0.0"
 
 setup: |
-  cat > /tmp/bashi-example-config.yaml << 'EOF'
-  name: example-app
-  version: 1.0.0
-  author: developer
-  EOF
+  echo "name: example-app" > /tmp/bashi-example-config.yaml
+  echo "version: 1.0.0" >> /tmp/bashi-example-config.yaml
+  echo "author: developer" >> /tmp/bashi-example-config.yaml
 
 teardown: |
   rm -f /tmp/bashi-example-config.yaml
@@ -24,20 +22,19 @@ tests:
   - name: "Use variable in yq query"
     command: "yq '{{YQ_QUERY}}' {{CONFIG_FILE}}"
     exitCode: 0
-    outputEquals: "example-app"
+    outputEquals: "{{APP_NAME}}"
 
-  - name: "Access environment variable for home directory"
-    command: "echo \"Home: {{USER_HOME}}\""
+  - name: "Use variable in assertion"
+    command: "yq '.version' {{CONFIG_FILE}}"
+    exitCode: 0
+    outputEquals: "{{APP_VERSION}}"
+
+  - name: "Variables in outputContains"
+    command: "yq '.' {{CONFIG_FILE}}"
     exitCode: 0
     outputContains:
-      - "Home:"
-      - "/"
-
-  - name: "Access shell path from environment"
-    command: "echo \"Shell: {{SHELL_PATH}}\""
-    exitCode: 0
-    outputContains:
-      - "Shell:"
+      - "{{APP_NAME}}"
+      - "{{APP_VERSION}}"
 
   - name: "Combine variables in complex command"
     command: |
@@ -46,4 +43,4 @@ tests:
     exitCode: 0
     outputContains:
       - "Reading"
-      - "example-app"
+      - "{{APP_NAME}}"
