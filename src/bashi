@@ -33,10 +33,15 @@ TRACE=false
 NO_COLOR=false
 PARALLEL_JOBS=1
 
+# Arrays for multi-file support
+TEST_SUITE_PATTERNS=()
+TEST_SUITE_FILES=()
+
 # Usage information
 usage() {
     cat <<EOF
-Usage: bashi [OPTIONS] <test-suite.bashi.yaml>
+Usage: bashi [OPTIONS] <test-suite.bashi.yaml>...
+       bashi [OPTIONS] <glob-pattern>...
 
 YAML-driven Bash test framework using Bats-core
 
@@ -52,10 +57,19 @@ OPTIONS:
     -j, --parallel [N]      Run tests in parallel with N jobs (default: CPU count)
     --no-color              Disable colored output (useful for testing)
 
+GLOB PATTERNS:
+    **/*.bashi.yaml         Match all .bashi.yaml files recursively
+    tests/*.bashi.yaml      Match .bashi.yaml files in tests/ directory
+    
 EXAMPLES:
     bashi tests/my-suite.bashi.yaml
+    bashi 'tests/**/*.bashi.yaml'
+    bashi -j 4 'tests/**/*.bashi.yaml' 'docs/**/*.bashi.yaml'
     bashi --validate-only tests/my-suite.bashi.yaml
-    bashi --verbose --timeout 60 tests/my-suite.bashi.yaml
+
+PARALLEL EXECUTION:
+    When using -j/--parallel, test suites with 'parallel: false' in their
+    YAML configuration will be run serially after parallel suites complete.
 
 EXIT CODES:
     0   All tests passed
@@ -138,23 +152,30 @@ parse_args() {
                 exit 2
                 ;;
             *)
-                # Positional argument - test suite file
-                if [ -n "${TEST_SUITE_FILE:-}" ]; then
-                    log_error "Multiple test suite files specified"
-                    exit 2
-                fi
-                TEST_SUITE_FILE="$1"
+                # Positional argument - test suite file or glob pattern
+                TEST_SUITE_PATTERNS+=("$1")
                 shift
                 ;;
         esac
     done
     
     # Validate required arguments
-    if [ -z "${TEST_SUITE_FILE:-}" ]; then
-        log_error "No test suite file specified"
+    if [ ${#TEST_SUITE_PATTERNS[@]} -eq 0 ]; then
+        log_error "No test suite file or pattern specified"
         usage >&2
         exit 2
     fi
+    
+    # Expand glob patterns to actual files
+    local expanded_files
+    if ! expanded_files=$(expand_glob_patterns "${TEST_SUITE_PATTERNS[@]}"); then
+        exit 2
+    fi
+    
+    # Convert to array
+    while IFS= read -r file; do
+        [ -n "${file}" ] && TEST_SUITE_FILES+=("${file}")
+    done <<< "${expanded_files}"
 }
 
 # Main workflow
@@ -169,49 +190,93 @@ main() {
     # Check dependencies
     check_dependencies || exit 2
     
-    # Validate YAML file exists
-    check_file_exists "${TEST_SUITE_FILE}" || exit 2
+    log_verbose "Found ${#TEST_SUITE_FILES[@]} test suite file(s)"
     
-    # Step 1: Validate schema
-    log_verbose "Step 1: Validating YAML schema..."
-    if ! validate_schema "${TEST_SUITE_FILE}"; then
-        log_error "Schema validation failed"
-        exit 2
-    fi
+    # Step 1: Validate all YAML files exist and pass schema validation
+    log_verbose "Step 1: Validating YAML schemas..."
+    local file
+    for file in "${TEST_SUITE_FILES[@]}"; do
+        check_file_exists "${file}" || exit 2
+        
+        if ! validate_schema "${file}"; then
+            log_error "Schema validation failed for: ${file}"
+            exit 2
+        fi
+        log_verbose "  ✓ ${file}"
+    done
     
     if [ "${VALIDATE_ONLY}" = true ]; then
-        echo "✓ Schema validation passed"
+        echo "✓ Schema validation passed for ${#TEST_SUITE_FILES[@]} file(s)"
         exit 0
     fi
     
-    # Step 2: Process YAML and resolve variables
-    log_verbose "Step 2: Processing YAML and resolving variables..."
-    local processed_data
-    processed_data=$(process_test_suite "${TEST_SUITE_FILE}")
-    
-    # Step 3: Generate Bats test file
-    log_verbose "Step 3: Generating Bats test file..."
-    local suite_name
-    suite_name=$(yq eval '.name' "${TEST_SUITE_FILE}")
-    
+    # Create shared temp directory for all generated bats files
     local temp_dir
     temp_dir=$(mktemp -d -t bashi.XXXXXX)
-    local bats_file="${temp_dir}/test.bats"
     
-    echo "${processed_data}" | generate_bats_file "${suite_name}" "${bats_file}" "${TRACE}"
+    # Arrays to track parallel vs serial test files
+    local parallel_bats_files=()
+    local serial_bats_files=()
     
-    # Step 4: Execute tests
-    log_verbose "Step 4: Executing tests..."
+    # Step 2: Process each YAML file and generate Bats files
+    log_verbose "Step 2: Processing YAML files and generating Bats tests..."
+    local index=0
+    for file in "${TEST_SUITE_FILES[@]}"; do
+        log_verbose "  Processing: ${file}"
+        
+        # Process YAML and resolve variables
+        local processed_data
+        processed_data=$(process_test_suite "${file}")
+        
+        # Generate Bats test file
+        local suite_name
+        suite_name=$(yq eval '.name' "${file}")
+        
+        local bats_file="${temp_dir}/test_${index}.bats"
+        echo "${processed_data}" | generate_bats_file "${suite_name}" "${bats_file}" "${TRACE}"
+        
+        # Check if suite allows parallel execution
+        local parallel_setting
+        parallel_setting=$(get_suite_parallel_setting "${file}")
+        
+        if [ "${parallel_setting}" = "true" ]; then
+            parallel_bats_files+=("${bats_file}")
+        else
+            serial_bats_files+=("${bats_file}")
+            log_verbose "    (marked for serial execution)"
+        fi
+        
+        ((index++)) || true
+    done
+    
+    # Step 3: Execute tests
+    log_verbose "Step 3: Executing tests..."
     local exit_code=0
     
-    if ! execute_bats_tests "${bats_file}" "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}" "${PARALLEL_JOBS}"; then
-        exit_code=$?
+    # Run parallel-safe suites together (if any)
+    if [ ${#parallel_bats_files[@]} -gt 0 ]; then
+        log_verbose "  Running ${#parallel_bats_files[@]} parallel-safe suite(s)..."
+        if ! execute_bats_tests_batch "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}" "${PARALLEL_JOBS}" "${parallel_bats_files[@]}"; then
+            exit_code=$?
+        fi
+    fi
+    
+    # Run serial suites one at a time (if any)
+    if [ ${#serial_bats_files[@]} -gt 0 ]; then
+        log_verbose "  Running ${#serial_bats_files[@]} serial suite(s)..."
+        for bats_file in "${serial_bats_files[@]}"; do
+            if ! execute_bats_tests_batch "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}" "1" "${bats_file}"; then
+                local serial_exit=$?
+                # Capture first failure exit code
+                [ "${exit_code}" -eq 0 ] && exit_code="${serial_exit}"
+            fi
+        done
     fi
     
     # Cleanup temp directory
     rm -rf "${temp_dir}"
     
-    # Return Bats exit code
+    # Return combined exit code
     exit "${exit_code}"
 }
 

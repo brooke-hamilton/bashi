@@ -8,6 +8,43 @@ set -euo pipefail
 # declare associative arrays for variable storage (Bash 4+)
 # For Bash 3.2 compatibility, we'll use a different approach with indexed arrays
 
+# get_suite_parallel_setting: Check if suite allows parallel execution
+# Args: $1 = YAML file path
+# Outputs: "true" or "false"
+# Returns: 0 always (defaults to true if field not present)
+get_suite_parallel_setting() {
+    local yaml_file="$1"
+    
+    local parallel_value
+    # Check if parallel field exists first
+    local has_parallel
+    has_parallel=$(yq eval '.parallel' "${yaml_file}")
+    
+    if [ "${has_parallel}" = "null" ]; then
+        # Field not present, default to true
+        echo "true"
+        return 0
+    fi
+    
+    parallel_value="${has_parallel}"
+    
+    # Normalize to lowercase string
+    case "${parallel_value}" in
+        true|True|TRUE|1)
+            echo "true"
+            ;;
+        false|False|FALSE|0)
+            echo "false"
+            ;;
+        *)
+            # Default to true if unrecognized value
+            echo "true"
+            ;;
+    esac
+    
+    return 0
+}
+
 # extract_variables: Extract variables from YAML file
 # Args: $1 = YAML file path
 # Outputs: Variable definitions (name=value pairs)

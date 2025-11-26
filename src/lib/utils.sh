@@ -70,3 +70,94 @@ log_verbose() {
 log_error() {
     echo "Error: $1" >&2
 }
+
+# expand_glob_pattern: Expand a single glob pattern to matching .bashi.yaml files
+# Supports: **/*.bashi.yaml (recursive), *.bashi.yaml (single level)
+# Args: $1 = glob pattern (e.g., "tests/**/*.bashi.yaml" or "tests/*.bashi.yaml")
+# Outputs: Matching file paths, one per line (sorted)
+# Returns: 0 if files found, 1 if no matches
+expand_glob_pattern() {
+    local pattern="$1"
+    local files=()
+
+    # If pattern is an existing file, return it directly
+    if [ -f "${pattern}" ]; then
+        echo "${pattern}"
+        return 0
+    fi
+
+    # Extract directory and file pattern
+    local dir
+    local file_pattern
+    local recursive=false
+
+    if [[ "${pattern}" == *"**"* ]]; then
+        # Recursive pattern: extract base dir before **
+        dir="${pattern%%\*\**}"
+        dir="${dir%/}"  # Remove trailing slash
+        [ -z "${dir}" ] && dir="."
+        file_pattern="${pattern##*\*\*/}"
+        recursive=true
+    else
+        # Non-recursive: extract directory and filename pattern
+        dir=$(dirname "${pattern}")
+        file_pattern=$(basename "${pattern}")
+    fi
+
+    # Validate directory exists
+    if [ ! -d "${dir}" ]; then
+        log_error "Directory not found: ${dir}"
+        return 1
+    fi
+
+    # Convert glob pattern to find -name pattern
+    # The file pattern should already be in find-compatible format (e.g., *.bashi.yaml)
+    local find_args=()
+    if [ "${recursive}" = true ]; then
+        find_args=("${dir}" -type f -name "${file_pattern}")
+    else
+        find_args=("${dir}" -maxdepth 1 -type f -name "${file_pattern}")
+    fi
+
+    # Execute find and collect results
+    while IFS= read -r file; do
+        [ -n "${file}" ] && files+=("${file}")
+    done < <(find "${find_args[@]}" 2>/dev/null | sort)
+
+    if [ ${#files[@]} -eq 0 ]; then
+        log_error "No files matched pattern: ${pattern}"
+        return 1
+    fi
+
+    # Output sorted file list
+    printf '%s\n' "${files[@]}"
+    return 0
+}
+
+# expand_glob_patterns: Expand multiple glob patterns or file paths
+# Args: $@ = list of patterns/files
+# Outputs: Unique matching file paths, one per line (sorted)
+# Returns: 0 if at least one file found, 1 if no matches
+expand_glob_patterns() {
+    local all_files=()
+    local pattern
+
+    for pattern in "$@"; do
+        local matched_files
+        if matched_files=$(expand_glob_pattern "${pattern}"); then
+            while IFS= read -r file; do
+                [ -n "${file}" ] && all_files+=("${file}")
+            done <<< "${matched_files}"
+        fi
+        # Continue processing remaining patterns even if one fails
+    done
+
+    if [ ${#all_files[@]} -eq 0 ]; then
+        log_error "No test files found"
+        return 1
+    fi
+
+    # Remove duplicates and sort
+    printf '%s\n' "${all_files[@]}" | sort -u
+    return 0
+}

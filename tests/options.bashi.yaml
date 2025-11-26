@@ -55,7 +55,7 @@ tests:
     command: "{{bashi}} -v"
     exitCode: 2
     outputContains:
-      - "No test suite file specified"
+      - "No test suite file or pattern specified"
 
   - name: Verbose option (--verbose)
     command: "{{bashi}} --verbose ./tests/hello.bashi.yaml"
@@ -74,7 +74,7 @@ tests:
     command: "{{bashi}} --validate-only /nonexistent/file.yaml"
     exitCode: 2
     outputContains:
-      - "File not found"
+      - "No test files found"
 
   - name: TAP format option (--tap)
     command: "{{bashi}} --tap ./tests/hello.bashi.yaml"
