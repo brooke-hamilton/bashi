@@ -32,17 +32,14 @@ tests:
       - "Usage:"
       - "OPTIONS"
 
-  - name: Run basic test suite
-    command: "{{bashi}} ./tests/basic.bashi.yaml"
+  - name: Run hello bashi test
+    command: "{{bashi}} ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
-      - "Exit code test"
-      - "Stderr test"
-      - "# skip"
+      - "Echo prints message"
 
   - name: Timings Option
-    command: "{{bashi}} ./tests/basic.bashi.yaml --timing --no-color"
+    command: "{{bashi}} ./tests/hello.bashi.yaml --timing --no-color"
     exitCode: 0
     outputMatches: "{{matchTiming}}"
 
@@ -61,13 +58,14 @@ tests:
       - "No test suite file specified"
 
   - name: Verbose option (--verbose)
-    command: "{{bashi}} --verbose ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --verbose ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Validating YAML schema"
+      - "Executing tests"
 
   - name: Validate-only option (--validate-only)
-    command: "{{bashi}} --validate-only ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --validate-only ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
       - "Schema validation passed"
@@ -79,62 +77,62 @@ tests:
       - "File not found"
 
   - name: TAP format option (--tap)
-    command: "{{bashi}} --tap ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --tap ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
       - "ok 1"
     outputMatches: "{{matchTapCount}}"
 
   - name: Short TAP format option (-t)
-    command: "{{bashi}} -t ./tests/basic.bashi.yaml"
+    command: "{{bashi}} -t ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains: "ok 1"
     outputMatches: "{{matchTapCount}}"
 
   - name: Timing option (short form -T)
-    command: "{{bashi}} -T ./tests/basic.bashi.yaml --no-color"
+    command: "{{bashi}} -T ./tests/hello.bashi.yaml --no-color"
     exitCode: 0
     outputMatches: "{{matchTiming}}"
 
   - name: Trace option (-x)
-    command: "{{bashi}} -x ./tests/basic.bashi.yaml"
+    command: "{{bashi}} -x ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Hello, Bashi"
 
   - name: Trace option (--trace)
-    command: "{{bashi}} --trace ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --trace ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Hello, Bashi"
 
   - name: Timeout option with default value
-    command: "{{bashi}} --timeout 300 ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --timeout 300 ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Echo prints message"
 
   - name: Timeout option with custom value
-    command: "{{bashi}} --timeout 60 ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --timeout 60 ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Echo prints message"
 
   - name: No-color option (--no-color)
-    command: "{{bashi}} --no-color ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --no-color ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Echo prints message"
 
   - name: Multiple options combined
-    command: "{{bashi}} --verbose --timing --no-color ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --verbose --timing --no-color ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
-      - "Echo test with variable substitution"
+      - "Echo prints message"
     outputMatches: "{{matchTiming}}"
 
   - name: Multiple options with TAP format
-    command: "{{bashi}} --tap --timing ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --tap --timing ./tests/hello.bashi.yaml"
     exitCode: 0
     outputContains:
       - "ok 1"
@@ -143,7 +141,7 @@ tests:
       - "{{matchTapCount}}"
 
   - name: Invalid option handling
-    command: "{{bashi}} --invalid-option ./tests/basic.bashi.yaml"
+    command: "{{bashi}} --invalid-option ./tests/hello.bashi.yaml"
     exitCode: 2
     outputContains:
       - "Unknown option"

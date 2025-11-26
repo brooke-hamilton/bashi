@@ -2,6 +2,8 @@
 # Variable Substitution Example
 # Demonstrates: User-defined variables and environment variables
 
+name: "Variable Substitution Example"
+
 variables:
   APP_BIN: "./bin/myapp"
   TEST_FILE: "/tmp/test-data.txt"
