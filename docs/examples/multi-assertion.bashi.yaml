@@ -4,7 +4,7 @@
 
 name: "Multi-Assertion Example"
 
-setup: |
+setupFile: |
   export TEST_DIR=$(mktemp -d)
   cat > "$TEST_DIR/data.yaml" << 'EOF'
   status: OK
@@ -12,7 +12,7 @@ setup: |
   timestamp: 2024-01-15T10:30:00Z
   EOF
 
-teardown: |
+teardownFile: |
   rm -rf "$TEST_DIR"
 
 tests:

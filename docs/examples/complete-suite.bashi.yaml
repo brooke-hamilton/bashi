@@ -19,7 +19,7 @@ fragments:
     exitCode: 0
     timeout: 10
 
-setup: |
+setupFile: |
   export TEST_DIR=$(mktemp -d)
   cat > "$TEST_DIR/config.yaml" << 'EOF'
   name: myapp
@@ -32,7 +32,7 @@ setup: |
     - metrics
   EOF
 
-teardown: |
+teardownFile: |
   rm -rf "$TEST_DIR"
 
 tests:

@@ -35,21 +35,21 @@
       },
       "additionalProperties": false
     },
+    "setupFile": {
+      "type": "string",
+      "description": "Commands to run once before all tests in the suite"
+    },
+    "teardownFile": {
+      "type": "string",
+      "description": "Commands to run once after all tests in the suite, even if tests fail"
+    },
     "setup": {
       "type": "string",
-      "description": "Commands to run once before all tests (suite-level setup)"
+      "description": "Commands to run before each individual test"
     },
     "teardown": {
       "type": "string",
-      "description": "Commands to run once after all tests, even if tests fail (suite-level teardown)"
-    },
-    "setupEach": {
-      "type": "string",
-      "description": "Commands to run before each individual test (per-test setup)"
-    },
-    "teardownEach": {
-      "type": "string",
-      "description": "Commands to run after each individual test (per-test teardown)"
+      "description": "Commands to run after each individual test, even if the test fails"
     },
     "tests": {
       "type": "array",

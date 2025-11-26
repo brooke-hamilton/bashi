@@ -4,22 +4,22 @@
 
 name: "Setup and Teardown Example"
 
-setup: |
+setupFile: |
   export TEST_DIR=$(mktemp -d)
   echo "Test environment: $TEST_DIR"
 
-teardown: |
+teardownFile: |
   rm -rf "$TEST_DIR"
   echo "Cleanup complete"
 
-setupEach: |
+setup: |
   cd "$TEST_DIR"
   cat > config.yaml << 'EOF'
   app: testapp
   env: testing
   EOF
 
-teardownEach: |
+teardown: |
   rm -f config.yaml
 
 tests:

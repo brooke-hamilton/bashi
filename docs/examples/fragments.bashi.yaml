@@ -14,7 +14,7 @@ fragments:
     outputContains:
       - ":"
 
-setup: |
+setupFile: |
   export TEST_DIR=$(mktemp -d)
   cat > "$TEST_DIR/app.yaml" << 'EOF'
   name: webapp
@@ -27,7 +27,7 @@ setup: |
   status: healthy
   EOF
 
-teardown: |
+teardownFile: |
   rm -rf "$TEST_DIR"
 
 tests:
