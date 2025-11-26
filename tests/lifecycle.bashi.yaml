@@ -1,8 +1,9 @@
 # Lifecycle Hooks Test Suite
 # Tests: setupFile, teardownFile, setup, teardown functionality
+# Note the usage of parallel: false to ensure serial execution for certain tests
 
 name: "Lifecycle Hooks Test Suite"
-
+parallel: false
 variables:
   markerPrefix: "bashi_lifecycle_test"
 
@@ -52,7 +53,7 @@ tests:
   - name: "setup runs before each test (counter increments)"
     command: "cat \"$SETUP_COUNTER_FILE\""
     exitCode: 0
-    # By test 3, setup should have run 3 times
+    # By test 3, setup should have run 3 times (suite uses parallel: false for serial execution)
     outputEquals: "3"
 
   - name: "Bashi default TEST_TEMP_DIR is still created"

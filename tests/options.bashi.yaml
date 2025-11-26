@@ -152,3 +152,16 @@ tests:
     outputContains:
       - "Usage:"
       - "OPTIONS"
+
+  - name: Parallel option with explicit job count
+    command: "{{bashi}} -j 2 ./tests/hello.bashi.yaml"
+    exitCode: 0
+    outputContains:
+      - "Echo prints message"
+
+  - name: Parallel option help text shows in help
+    command: "{{bashi}} --help"
+    exitCode: 0
+    outputContains:
+      - "--parallel"
+      - "Run tests in parallel"

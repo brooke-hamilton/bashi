@@ -92,6 +92,7 @@ OPTIONS:
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
+    -j, --parallel [N]      Run tests in parallel with N jobs (default: CPU count)
     --no-color              Disable colored output (useful for testing)
 
 EXAMPLES:
@@ -101,6 +102,8 @@ EXAMPLES:
     bashi --tap --timing tests/my-suite.bashi.yaml
     bashi --trace --verbose tests/my-suite.bashi.yaml
     bashi --timing --no-color tests/my-suite.bashi.yaml
+    bashi --parallel tests/my-suite.bashi.yaml
+    bashi -j 4 tests/my-suite.bashi.yaml
 ```
 
 ## Test Suite Schema
@@ -184,6 +187,57 @@ tests:
 
 - Variables exported in `setupFile` are available to all tests
 - Use `echo "message" >&3` to display output during test execution
+
+### Parallel Execution
+
+Bashi supports parallel test execution via Bats-core's `--jobs` flag. Use `-j` or `--parallel` to enable:
+
+```bash
+# Run with CPU count parallel jobs (default when using --parallel without a number)
+bashi --parallel tests/my-suite.bashi.yaml
+
+# Run with specific number of parallel jobs
+bashi -j 4 tests/my-suite.bashi.yaml
+```
+
+**Prerequisites:** Parallel execution requires [GNU parallel](https://www.gnu.org/software/parallel/) or [shenwei356/rush](https://github.com/shenwei356/rush):
+
+```bash
+# Debian/Ubuntu
+apt-get install parallel
+
+# macOS
+brew install parallel
+```
+
+#### Writing Parallel-Safe Tests
+
+Not all tests can run in parallel. Test suites that share state or depend on execution order should use `parallel: false` at the suite level:
+
+```yaml
+name: "Tests with shared state"
+parallel: false  # Forces entire suite to run serially
+
+tests:
+  - name: "First test"
+    command: echo "1" >> "$SHARED_FILE"
+    exitCode: 0
+
+  - name: "Second test depends on first"
+    command: cat "$SHARED_FILE"
+    exitCode: 0
+    outputContains: "1"
+```
+
+**Guidelines for parallel-safe tests:**
+
+| Pattern | Parallel-Safe? | Solution |
+|---------|---------------|----------|
+| Read-only operations | ✅ Yes | No changes needed |
+| Per-test temp directories | ✅ Yes | Use `$TEST_TEMP_DIR` (auto-created) |
+| Shared counter files | ❌ No | Use `parallel: false` on suite |
+| Tests depending on execution order | ❌ No | Use `parallel: false` on suite |
+| Writing to same file from multiple tests | ❌ No | Use unique filenames or `parallel: false` |
 
 ## Examples
 

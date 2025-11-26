@@ -31,6 +31,7 @@ TAP_OUTPUT=false
 TIMING=false
 TRACE=false
 NO_COLOR=false
+PARALLEL_JOBS=1
 
 # Usage information
 usage() {
@@ -48,6 +49,7 @@ OPTIONS:
     -T, --timing            Show timing information for each test
     -x, --trace             Print test commands as they are executed
     --timeout SECONDS       Set test execution timeout (default: 300)
+    -j, --parallel [N]      Run tests in parallel with N jobs (default: CPU count)
     --no-color              Disable colored output (useful for testing)
 
 EXAMPLES:
@@ -104,6 +106,23 @@ parse_args() {
             --no-color)
                 NO_COLOR=true
                 shift
+                ;;
+            -j|--parallel)
+                # Check if next arg is a number (optional argument)
+                if [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]]; then
+                    PARALLEL_JOBS="$2"
+                    shift 2
+                else
+                    # Default to CPU count
+                    if command -v nproc >/dev/null 2>&1; then
+                        PARALLEL_JOBS=$(nproc)
+                    elif command -v sysctl >/dev/null 2>&1; then
+                        PARALLEL_JOBS=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+                    else
+                        PARALLEL_JOBS=4
+                    fi
+                    shift
+                fi
                 ;;
             --timeout)
                 if [ $# -lt 2 ]; then
@@ -185,7 +204,7 @@ main() {
     log_verbose "Step 4: Executing tests..."
     local exit_code=0
     
-    if ! execute_bats_tests "${bats_file}" "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}"; then
+    if ! execute_bats_tests "${bats_file}" "${TIMEOUT}" "${TAP_OUTPUT}" "${TIMING}" "${TRACE}" "${PARALLEL_JOBS}"; then
         exit_code=$?
     fi
     

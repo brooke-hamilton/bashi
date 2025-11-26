@@ -51,6 +51,11 @@
       "type": "string",
       "description": "Commands to run after each individual test, even if the test fails"
     },
+    "parallel": {
+      "type": "boolean",
+      "description": "Whether tests in this suite can run in parallel (default: true). Set to false to force serial execution.",
+      "default": true
+    },
     "tests": {
       "type": "array",
       "description": "Array of test definitions to execute",
