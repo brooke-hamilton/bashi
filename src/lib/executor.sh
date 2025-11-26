@@ -6,6 +6,17 @@ set -euo pipefail
 
 # Assumes utils.sh has already been sourced
 
+# check_parallel_available: Verify parallel execution tools are installed
+# Returns: 0 if parallel or rush is available, 2 if neither is installed
+check_parallel_available() {
+    if ! command -v parallel >/dev/null 2>&1 && ! command -v rush >/dev/null 2>&1; then
+        log_error "Parallel execution requires GNU parallel or shenwei356/rush to be installed"
+        log_error "Install with: apt-get install parallel (Debian/Ubuntu) or brew install parallel (macOS)"
+        return 2
+    fi
+    return 0
+}
+
 # execute_bats_tests: Run Bats test file
 # Args: $1 = bats file path, $2 = timeout (optional, default 300), $3 = tap output (optional, default false),
 #       $4 = timing (optional, default false), $5 = trace (optional, default false), $6 = parallel jobs (optional, default 1)
@@ -34,12 +45,7 @@ execute_bats_tests() {
         bats_cmd+=("--timing")
     fi
     if [ "${parallel_jobs}" -gt 1 ]; then
-        # Check for parallel binary (required by Bats for --jobs)
-        if ! command -v parallel >/dev/null 2>&1 && ! command -v rush >/dev/null 2>&1; then
-            log_error "Parallel execution requires GNU parallel or shenwei356/rush to be installed"
-            log_error "Install with: apt-get install parallel (Debian/Ubuntu) or brew install parallel (macOS)"
-            return 2
-        fi
+        check_parallel_available || return 2
         bats_cmd+=("--jobs" "${parallel_jobs}")
     fi
     
@@ -97,12 +103,7 @@ execute_bats_tests_batch() {
         bats_cmd+=("--timing")
     fi
     if [ "${parallel_jobs}" -gt 1 ]; then
-        # Check for parallel binary (required by Bats for --jobs)
-        if ! command -v parallel >/dev/null 2>&1 && ! command -v rush >/dev/null 2>&1; then
-            log_error "Parallel execution requires GNU parallel or shenwei356/rush to be installed"
-            log_error "Install with: apt-get install parallel (Debian/Ubuntu) or brew install parallel (macOS)"
-            return 2
-        fi
+        check_parallel_available || return 2
         bats_cmd+=("--jobs" "${parallel_jobs}")
     fi
     
