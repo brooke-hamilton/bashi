@@ -32,6 +32,7 @@ TIMING=false
 TRACE=false
 NO_COLOR=false
 PARALLEL_JOBS=1
+INIT_MODE=false
 
 # Arrays for multi-file support
 TEST_SUITE_PATTERNS=()
@@ -42,12 +43,14 @@ usage() {
     cat <<EOF
 Usage: bashi [OPTIONS] <test-suite.bashi.yaml>...
        bashi [OPTIONS] <glob-pattern>...
+       bashi --init
 
 YAML-driven Bash test framework using Bats-core
 
 OPTIONS:
     -h, --help              Show this help message
     -v, --version           Show version information
+    --init                  Create a new hello-world.bashi.yaml template in the current directory
     --verbose               Enable verbose output
     --validate-only         Only validate the YAML schema, do not run tests
     -t, --tap               Output in TAP format instead of pretty print
@@ -85,6 +88,75 @@ version_info() {
     echo "YAML-driven Bash test framework"
 }
 
+# Initialize a new hello-world.bashi.yaml template
+init_template() {
+    local output_file="hello-world.bashi.yaml"
+    
+    if [ -f "${output_file}" ]; then
+        log_error "File already exists: ${output_file}"
+        exit 1
+    fi
+    
+    cat > "${output_file}" <<'EOF'
+# yaml-language-server: $schema=https://raw.githubusercontent.com/brooke-hamilton/bashi/refs/heads/main/src/bashi-schema.json
+# Hello World Bashi Test Suite
+# A starter template for writing YAML-driven Bash tests
+# See: https://github.com/brooke-hamilton/bashi
+
+name: "Hello World Test Suite"
+
+# Variables can be referenced in commands using {{variableName}} syntax
+# variables:
+#   greeting: "Hello"
+#   target: "World"
+
+# Lifecycle Hooks:
+#   - setupFile:    Runs once before all tests (suite-wide setup)
+#   - teardownFile: Runs once after all tests (suite-wide cleanup)
+#   - setup:        Runs before each individual test
+#   - teardown:     Runs after each individual test
+#
+# Variables exported in setupFile are available to all tests
+# Use BATS_SUITE_TMPDIR for suite-wide temp files
+# Use BATS_TEST_TMPDIR for per-test temp files
+
+# setupFile: |
+#   export MY_SUITE_VAR="suite-level-value"
+#   echo "Suite setup complete" >&3
+
+# teardownFile: |
+#   echo "Suite teardown complete" >&3
+
+# setup: |
+#   export MY_TEST_VAR="test-level-value"
+
+# teardown: |
+#   # Cleanup per-test resources here
+#   :
+
+tests:
+  - name: "Echo prints hello world"
+    command: "echo 'Hello, World!'"
+    exitCode: 0
+    outputContains:
+      - "Hello"
+      - "World"
+
+  - name: "Exit code validation works"
+    command: "true"
+    exitCode: 0
+
+  # Uncomment the following test to see a failing test example:
+  # - name: "Example failing test"
+  #   command: "echo 'actual output'"
+  #   exitCode: 0
+  #   outputEquals: "expected output"
+EOF
+
+    echo "Created ${output_file}"
+    echo "Run with: bashi ${output_file}"
+}
+
 # Parse command line arguments
 parse_args() {
     while [ $# -gt 0 ]; do
@@ -96,6 +168,10 @@ parse_args() {
             --version)
                 version_info
                 exit 0
+                ;;
+            --init)
+                INIT_MODE=true
+                shift
                 ;;
             -v|--verbose)
                 export BASHI_VERBOSE=true
@@ -158,6 +234,21 @@ parse_args() {
                 ;;
         esac
     done
+    
+    # Handle --init mode
+    if [ "${INIT_MODE}" = true ]; then
+        # Validate that no other options or arguments were provided
+        if [ "${VALIDATE_ONLY}" = true ] || [ "${TAP_OUTPUT}" = true ] || \
+           [ "${TIMING}" = true ] || [ "${TRACE}" = true ] || \
+           [ "${NO_COLOR}" = true ] || [ "${PARALLEL_JOBS}" -ne 1 ] || \
+           [ "${TIMEOUT}" -ne 300 ] || [ "${BASHI_VERBOSE:-false}" = true ] || \
+           [ ${#TEST_SUITE_PATTERNS[@]} -gt 0 ]; then
+            log_error "--init cannot be combined with other options or arguments"
+            exit 2
+        fi
+        init_template
+        exit 0
+    fi
     
     # Validate required arguments
     if [ ${#TEST_SUITE_PATTERNS[@]} -eq 0 ]; then
