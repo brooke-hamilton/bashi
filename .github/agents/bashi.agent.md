@@ -128,7 +128,48 @@
 
 **Rationale**: Users must understand that Bashi is a YAML interface to Bats-core, not a competing tool. Clear documentation prevents confusion and enables adoption.
 
-### VIII. Compatibility Commitments
+### VIII. README.md Synchronization
+
+**Rule**: The README.md MUST be updated whenever changes affect user-facing features or command-line behavior.
+
+**Mandatory README Updates**:
+
+When making changes to any of the following, the README.md MUST be updated in the same PR:
+
+- Command-line options (adding, removing, or modifying flags in `src/bashi`)
+- Usage examples (ensure examples reflect current behavior)
+- YAML schema fields (new fields, changed behavior, or removed fields)
+- Exit codes (any changes to exit code values or meanings)
+- Installation requirements or prerequisites
+- Test suite schema (top-level fields or test definition fields)
+- Lifecycle hooks (setup, teardown, setupFile, teardownFile)
+- Variable substitution syntax
+- Parallel execution behavior
+- Project structure changes
+- Makefile targets or usage
+
+**README Sections to Check**:
+
+| Change Type | README Section(s) to Update |
+|-------------|----------------------------|
+| New CLI flag | "Usage" section, "EXAMPLES" |
+| Changed exit code | "Exit Codes" section |
+| New YAML field | "Test Suite Schema" section |
+| New lifecycle hook | "Lifecycle Hooks" section |
+| Parallel behavior | "Parallel Execution" section |
+| New prerequisite | "Prerequisites" section |
+| Project structure | "Project Structure" section |
+
+**Verification Process**:
+
+1. Before completing a PR, review changes against README.md content
+2. If any user-facing behavior changes, update corresponding README sections
+3. Ensure examples in README still work with the updated code
+4. Verify command-line help (`--help`) matches README documentation
+
+**Rationale**: The README.md is the primary user-facing documentation. Keeping it synchronized with code changes ensures users have accurate, up-to-date information and reduces confusion and support burden.
+
+### IX. Compatibility Commitments
 
 **Rule**: Bashi MUST maintain compatibility with Bats-core and preserve TAP compliance.
 
@@ -141,7 +182,7 @@
 
 **Rationale**: Breaking compatibility defeats the dependency-first architecture. TAP compliance ensures interoperability with CI/CD systems and other TAP-consuming tools.
 
-### IX. Anti-Patterns to Avoid
+### X. Anti-Patterns to Avoid
 
 **Rule**: These patterns are explicitly FORBIDDEN.
 
@@ -156,7 +197,7 @@
 
 **Rationale**: These anti-patterns represent common failure modes that would compromise the project's core principles. Explicit prohibition prevents drift.
 
-### X. Extension Points
+### XI. Extension Points
 
 **Rule**: Design for future extensibility without modifying core adapter.
 
@@ -220,8 +261,9 @@ This constitution supersedes all other development practices and decisions. All 
 **Compliance Review**:
 
 - All PRs MUST verify compliance with constitution principles
-- Complexity MUST be justified against Principle IX anti-patterns
+- Complexity MUST be justified against Principle X anti-patterns
 - Reviewers MUST check for Bash coding convention adherence (Principle V)
+- Reviewers MUST verify README.md is updated for user-facing changes (Principle VIII)
 - Any deviation from principles requires explicit documentation and justification
 
 **Runtime Guidance**:
@@ -233,4 +275,4 @@ This constitution supersedes all other development practices and decisions. All 
 **License**:
 Bashi is distributed under the MIT License, ensuring compatibility with Bats-core's MIT license and allowing broad adoption.
 
-**Version**: 1.0.1 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-11-06
+**Version**: 1.1.0 | **Ratified**: 2025-11-06 | **Last Amended**: 2025-12-02
