@@ -87,9 +87,9 @@ bashi --init
 
 OPTIONS:
     -h, --help              Show this help message
-    -v, --version           Show version information
+    --version               Show version information
     --init                  Create a new hello-world.bashi.yaml template in the current directory
-    --verbose               Enable verbose output
+    -v, --verbose           Enable verbose output
     --validate-only         Only validate the YAML schema, do not run tests
     -t, --tap               Output in TAP format instead of pretty print
     -T, --timing            Show timing information for each test
