@@ -83,10 +83,12 @@ bashi my-tests.bashi.yaml
 ```bash
 bashi [OPTIONS] <test-suite.bashi.yaml>...
 bashi [OPTIONS] <glob-pattern>...
+bashi --init
 
 OPTIONS:
     -h, --help              Show this help message
     -v, --version           Show version information
+    --init                  Create a new hello-world.bashi.yaml template in the current directory
     --verbose               Enable verbose output
     --validate-only         Only validate the YAML schema, do not run tests
     -t, --tap               Output in TAP format instead of pretty print
@@ -101,6 +103,7 @@ GLOB PATTERNS:
     tests/*.bashi.yaml      Match .bashi.yaml files in tests/ directory
 
 EXAMPLES:
+    bashi --init
     bashi tests/my-suite.bashi.yaml
     bashi 'tests/**/*.bashi.yaml'
     bashi -j 4 'tests/**/*.bashi.yaml' 'docs/**/*.bashi.yaml'
