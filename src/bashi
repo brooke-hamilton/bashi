@@ -23,6 +23,7 @@ source "${SCRIPT_DIR}/lib/executor.sh"
 
 # Version
 VERSION="0.1.0"
+SCHEMA_VERSION="1.0.0"
 
 # Default options
 VALIDATE_ONLY=false
@@ -85,6 +86,7 @@ EOF
 # Version information
 version_info() {
     echo "bashi version ${VERSION}"
+    echo "Schema version ${SCHEMA_VERSION}"
     echo "YAML-driven Bash test framework"
 }
 

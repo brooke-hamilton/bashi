@@ -29,9 +29,13 @@ validate_schema() {
     local schema_file="${PROJECT_ROOT}/src/bashi-schema.json"
     
     check_file_exists "${yaml_file}" || return 1
-    check_file_exists "${schema_file}" || return 1
     
-    log_verbose "Validating against schema: ${schema_file}"
+    # Schema file is optional for consolidated builds
+    if [ -f "${schema_file}" ]; then
+        log_verbose "Validating against schema: ${schema_file}"
+    else
+        log_verbose "Schema file not found (consolidated build), performing basic validation"
+    fi
     
     # First check YAML syntax
     validate_yaml_syntax "${yaml_file}" || return 1
