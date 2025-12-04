@@ -84,8 +84,8 @@ cat >> "${OUTPUT_FILE}" <<'EOF'
 # Main Script: bashi
 # ============================================================================
 
-# For consolidated version, PROJECT_ROOT points to the directory containing the schema
-# This is set to empty since schema validation is self-contained
+# For consolidated version, set PROJECT_ROOT to the script directory
+# Schema validation is self-contained and doesn't require the schema file
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}"
 
