@@ -305,6 +305,10 @@ main() {
     local temp_dir
     temp_dir=$(mktemp -d -t bashi.XXXXXX)
     
+    # Ensure cleanup on exit, interrupt, or termination
+    # shellcheck disable=SC2064
+    trap "rm -rf '${temp_dir}'" EXIT INT TERM
+    
     # Arrays to track parallel vs serial test files
     local parallel_bats_files=()
     local serial_bats_files=()
@@ -337,7 +341,7 @@ main() {
             log_verbose "    (marked for serial execution)"
         fi
         
-        ((index++)) || true
+        index=$((index + 1))
     done
     
     # Step 3: Execute tests
@@ -364,8 +368,7 @@ main() {
         done
     fi
     
-    # Cleanup temp directory
-    rm -rf "${temp_dir}"
+    # Cleanup handled by EXIT trap
     
     # Return combined exit code
     exit "${exit_code}"
