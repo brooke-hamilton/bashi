@@ -35,3 +35,6 @@ vendor/
 
 # Bashi specific - temp test files generated during execution
 *.bats.tmp
+
+# Copilot tracking - for copilot-generated files
+.copilot-tracking/
