@@ -89,6 +89,87 @@ make test FILE=./tests/basic.bashi.yaml
 make test OPTS='--verbose --trace'
 ```
 
+## Release Process
+
+Bashi uses an automated release process that creates a consolidated single-file executable and publishes it as a GitHub Release.
+
+### Version Management
+
+Bashi tracks two independent version numbers:
+
+1. **Tool Version** (`VERSION` in `src/bashi`) - Increments with any code changes
+2. **Schema Version** (`version` in `src/bashi-schema.json`) - Only increments when the YAML schema changes
+
+### Creating a Release
+
+Releases are created automatically when a version tag is pushed to the repository:
+
+1. **Update version numbers**:
+
+   ```bash
+   # Update tool version in src/bashi
+   VERSION="0.2.0"
+   
+   # Only update schema version if schema changed
+   # Edit src/bashi-schema.json: "version": "1.1.0"
+   ```
+
+2. **Commit version updates**:
+
+   ```bash
+   git add src/bashi src/bashi-schema.json
+   git commit -m "Release v0.2.0"
+   ```
+
+3. **Create and push tag**:
+
+   ```bash
+   git tag v0.2.0
+   git push origin main
+   git push origin v0.2.0
+   ```
+
+4. **GitHub Actions will automatically**:
+   - Run all tests
+   - Build the consolidated executable using `scripts/consolidate.sh`
+   - Verify the consolidated version works
+   - Create a GitHub Release with:
+     - `bashi` - Single-file executable
+     - `bashi-schema.json` - JSON Schema file
+     - Auto-generated release notes
+
+### Manual Release Trigger
+
+You can also trigger a release manually from the GitHub Actions UI:
+
+1. Go to Actions → Release workflow
+2. Click "Run workflow"
+3. Enter the version (e.g., `v0.2.0`)
+4. Click "Run workflow"
+
+### Release Artifacts
+
+Each release includes:
+
+- **bashi** - Consolidated single-file executable containing all library code
+- **bashi-schema.json** - JSON Schema for YAML test definitions
+
+### Testing Releases
+
+Before creating an official release, test the consolidation process locally:
+
+```bash
+# Build consolidated executable
+./scripts/consolidate.sh dist/bashi
+
+# Verify it works
+./dist/bashi --version
+./dist/bashi tests/hello.bashi.yaml
+
+# Run all tests
+./dist/bashi 'tests/**/*.bashi.yaml'
+```
+
 ## Questions?
 
 If you have questions, feel free to open an issue with the "question" label.

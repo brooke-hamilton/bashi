@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          
+          # Install yq
+          YQ_VERSION="v4.40.5"
+          wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          chmod +x /usr/local/bin/yq
+          
+          # Install bats-core
+          BATS_VERSION="1.13.0"
+          wget -q "https://github.com/bats-core/bats-core/archive/refs/tags/v${BATS_VERSION}.tar.gz"
+          tar -xzf "v${BATS_VERSION}.tar.gz"
+          cd "bats-core-${BATS_VERSION}"
+          sudo ./install.sh /usr/local
+          cd ..
+          rm -rf "bats-core-${BATS_VERSION}" "v${BATS_VERSION}.tar.gz"
+
+      - name: Verify dependencies
+        run: |
+          yq --version
+          bats --version
+
+      - name: Run tests
+        run: |
+          make test
+
+      - name: Build consolidated executable
+        run: |
+          ./scripts/consolidate.sh dist/bashi
+          chmod +x dist/bashi
+
+      - name: Verify consolidated executable
+        run: |
+          ./dist/bashi --version
+          ./dist/bashi tests/hello.bashi.yaml
+
+      - name: Copy schema file
+        run: |
+          cp src/bashi-schema.json dist/bashi-schema.json
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > dist/RELEASE_NOTES.md <<EOF
+          # Bashi ${{ steps.version.outputs.version }}
+          
+          YAML-driven Bash test framework using Bats-core
+          
+          ## Installation
+          
+          Download the \`bashi\` executable and make it executable:
+          
+          \`\`\`bash
+          curl -L https://github.com/brooke-hamilton/bashi/releases/download/${{ steps.version.outputs.version }}/bashi -o bashi
+          chmod +x bashi
+          sudo mv bashi /usr/local/bin/
+          \`\`\`
+          
+          ## Verify Installation
+          
+          \`\`\`bash
+          bashi --version
+          \`\`\`
+          
+          ## Quick Start
+          
+          Create a test template:
+          
+          \`\`\`bash
+          bashi --init
+          \`\`\`
+          
+          Run your tests:
+          
+          \`\`\`bash
+          bashi hello-world.bashi.yaml
+          \`\`\`
+          
+          ## What's Included
+          
+          - \`bashi\` - Single-file consolidated executable
+          - \`bashi-schema.json\` - JSON Schema for YAML test definitions
+          
+          ## Documentation
+          
+          - [README](https://github.com/brooke-hamilton/bashi/blob/main/README.md)
+          - [Examples](https://github.com/brooke-hamilton/bashi/tree/main/docs/examples)
+          - [Contributing](https://github.com/brooke-hamilton/bashi/blob/main/CONTRIBUTING.md)
+          
+          ## Requirements
+          
+          - Bash 3.2 or higher
+          - [yq](https://github.com/mikefarah/yq) v4+
+          - [Bats-core](https://github.com/bats-core/bats-core)
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: dist/RELEASE_NOTES.md
+          files: |
+            dist/bashi
+            dist/bashi-schema.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

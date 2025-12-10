@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/brooke-hamilton/bashi/tree/main/src/bashi-schema.json",
+  "version": "1.0.0",
   "title": "Bashi Test Suite",
   "description": "YAML schema for Bashi CLI test definitions",
   "type": "object",
