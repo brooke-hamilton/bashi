@@ -6,6 +6,20 @@ YAML-driven Bash test framework using Bats-core
 
 Bashi is a declarative testing framework for command-line tools that allows you to define CLI tests in YAML and execute them using Bats-core. Write your tests once in a simple YAML format, and Bashi handles the rest - validation, variable substitution, test generation, and execution.
 
+## Why Bashi?
+
+**Write tests without writing Bash.** If you're building CLI tools but aren't comfortable with Bash syntax, Bashi lets you write comprehensive test suites in YAML while still getting the power and reliability of Bats-core.
+
+**Perfect for:**
+
+- Testing CLI applications in any language (Go, Python, Rust, Node.js, etc.)
+- Documentation-driven testing where test definitions double as specifications
+- Teams with mixed skill levels - YAML is more accessible than Bash scripting
+- CI/CD pipelines requiring readable, maintainable test definitions
+- Projects where test clarity is as important as test coverage
+
+**Not a Bats replacement.** Bashi is a thin adapter that uses Bats-core as a dependency. You get all the benefits of Bats (TAP compliance, robust execution, ecosystem compatibility) with a more approachable interface for CLI testing scenarios.
+
 ## Features
 
 - **Declarative YAML syntax** - Define tests in a clear, readable format
