@@ -37,9 +37,40 @@ Bashi is a declarative testing framework for command-line tools that allows you 
 - [yq](https://github.com/mikefarah/yq) v4+ (YAML processor)
 - [Bats-core](https://github.com/bats-core/bats-core) (test execution engine)
 
-### Install Bashi
+### From GitHub Releases (Recommended)
 
-Bashi does not have releases yet, and is not published to package managers. A simple way to install Bashi is to clone the repository and create a command alias that points to the full path.
+Download the latest release from GitHub:
+
+```bash
+# Download the latest bashi executable
+curl -L https://github.com/brooke-hamilton/bashi/releases/latest/download/bashi -o bashi
+chmod +x bashi
+sudo mv bashi /usr/local/bin/
+
+# Verify installation
+bashi --version
+```
+
+Or download a specific version:
+
+```bash
+# Replace v0.1.0 with desired version
+VERSION=v0.1.0
+curl -L "https://github.com/brooke-hamilton/bashi/releases/download/${VERSION}/bashi" -o bashi
+chmod +x bashi
+sudo mv bashi /usr/local/bin/
+```
+
+You can also download the JSON Schema for IDE integration:
+
+```bash
+VERSION=v0.1.0
+curl -L "https://github.com/brooke-hamilton/bashi/releases/download/${VERSION}/bashi-schema.json" -o bashi-schema.json
+```
+
+### From Source
+
+For development or to use the latest unreleased changes:
 
 1. Clone the repository:
 
@@ -48,7 +79,13 @@ Bashi does not have releases yet, and is not published to package managers. A si
     cd bashi
     ```
 
-1. Alias the full path to the `bashi` script. You can add this to your shell profile (e.g., `~/.bashrc` or `~/.zshrc`):
+2. Run bashi directly from the source directory:
+
+    ```bash
+    ./src/bashi tests/my-suite.bashi.yaml
+    ```
+
+3. Optionally, create an alias in your shell profile (e.g., `~/.bashrc` or `~/.zshrc`):
 
     ```bash
     alias bashi='<path to cloned repo>/src/bashi'
